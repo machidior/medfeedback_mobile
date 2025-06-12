@@ -1,129 +1,168 @@
-import React, { useRef, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../types'; // Import RootStackParamList from types.ts
+import { RootStackParamList } from '../types';
+import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 
-// Remove the local RootStackParamList definition
-// type RootStackParamList = {
-//   Welcome: undefined;
-//   Login: undefined;
-//   OTP: undefined;    
-//   Home: undefined;   
-// };
+const OTPScreen = ({ navigation, route }: StackScreenProps<RootStackParamList, 'OTP'>) => {
+  const { phoneNumber, otp } = route.params || {};
+  const [enteredOtp, setEnteredOtp] = useState('');
 
-// Use StackScreenProps to type the props, specifically for the 'OTP' screen
-const OTPScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'OTP'>) => {
-  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
-  const inputRefs = useRef<TextInput[]>([]).current;
+  useEffect(() => {
+    if (!phoneNumber || !otp) {
+      Alert.alert(
+        'Error',
+        'Missing phone number or OTP. Please try logging in again.',
+        [{ text: 'OK', onPress: () => navigation.navigate('Login') }]
+      );
+    }
+  }, [phoneNumber, otp, navigation]);
 
-  const handleOtpChange = (text: string, index: number) => {
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-
-    // Move to the next input automatically
-    if (text !== '' && index < otp.length - 1) {
-      inputRefs[index + 1]?.focus();
+  const handleVerify = () => {
+    if (enteredOtp === otp) {
+      Alert.alert('Success', 'OTP Verified!');
+      navigation.navigate('AppTabs', { screen: 'HomeTab' });
+    } else {
+      Alert.alert('Error', 'Invalid OTP. Please try again.');
     }
   };
 
-  const handleContinue = () => {
-    const enteredOtp = otp.join('');
-    console.log('Entered OTP:', enteredOtp);
-    // TODO: Add OTP verification logic here
-    // If verification is successful, navigate to the next screen
-    // Navigate to the HomeTab within the AppTabs Bottom Tab Navigator
-    navigation.navigate('AppTabs', { screen: 'HomeTab' }); 
-  };
-
   return (
-    <View style={styles.container}>
-      <View style={styles.otpBox}>
+    <LinearGradient
+      colors={['#E6F7FF', '#FFFFFF']}
+      style={styles.container}
+    >
+      <View style={styles.logoContainer}>
+        <Text style={styles.logoText}>MF</Text>
         <Text style={styles.titleText}>MedFeedback</Text>
-        <Text style={styles.label}>Enter OTP:</Text>
-        <View style={styles.otpContainer}>{
-          otp.map((digit, index) => (
-            <TextInput
-              key={index}
-              ref={(ref) => { if (ref) inputRefs[index] = ref; }}
-              style={styles.otpInput}
-              keyboardType='number-pad'
-              maxLength={1}
-              value={digit}
-              onChangeText={(text) => handleOtpChange(text, index)}
-            />
-          ))
-        }</View>
-        <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>{
-          <Text style={styles.buttonText}>Continue</Text>
-        }</TouchableOpacity>
       </View>
-      <Text style={styles.noteText}>Note: This application doesn\'t use any of your credential during{`\\n`}the feedback submission.</Text>
-    </View>
+
+      <View style={styles.formContainer}>
+        <Text style={styles.welcomeText}>Verify Your Number</Text>
+        {phoneNumber ? (
+          <Text style={styles.subtitleText}>Enter the 4-digit code sent to {phoneNumber}</Text>
+        ) : (
+          <Text style={styles.subtitleText}>Enter the 4-digit code</Text>
+        )}
+
+        <View style={styles.inputContainer}>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter OTP"
+            keyboardType="number-pad"
+            value={enteredOtp}
+            onChangeText={setEnteredOtp}
+            maxLength={4}
+            secureTextEntry={false}
+          />
+        </View>
+
+        <TouchableOpacity 
+          style={styles.verifyButton}
+          onPress={handleVerify}
+        >
+          <Text style={styles.buttonText}>Verify</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.resendButton}>
+          <Text style={styles.resendText}>Didn't receive the code? Resend</Text>
+        </TouchableOpacity>
+      </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#B0E0E6', // Light blue background
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
+    paddingTop: Constants.statusBarHeight,
   },
-  otpBox: {
-    backgroundColor: '#FFFFFF', // White background for the container
-    borderRadius: 15,
-    padding: 20,
+  logoContainer: {
     alignItems: 'center',
-    width: '100%',
-    maxWidth: 400,
+    marginTop: 40,
     marginBottom: 20,
+  },
+  logoText: {
+    fontSize: 48,
+    fontWeight: 'bold',
+    color: '#007BFF',
+    backgroundColor: '#E6F7FF',
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    lineHeight: 100,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: '#007BFF',
   },
   titleText: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#004080',
+    fontFamily: 'System',
+    letterSpacing: 1,
+  },
+  formContainer: {
+    flex: 1,
+    paddingHorizontal: 30,
+    paddingTop: 40,
+  },
+  welcomeText: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#007BFF',
-  },
-  label: {
-    fontSize: 16,
+    color: '#004080',
     marginBottom: 10,
-    alignSelf: 'flex-start',
+    fontFamily: 'System',
   },
-  otpContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '80%', // Adjust width as needed
+  subtitleText: {
+    fontSize: 16,
+    color: '#666',
+    marginBottom: 30,
+    fontFamily: 'System',
+  },
+  inputContainer: {
     marginBottom: 20,
   },
-  otpInput: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 5,
-    padding: 10,
-    width: 40, // Adjust size of input box
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 24,
     textAlign: 'center',
-    fontSize: 18,
+    letterSpacing: 8,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    fontFamily: 'System',
   },
-  continueButton: {
-    backgroundColor: '#6495ED',
-    paddingVertical: 12,
-    paddingHorizontal: 40,
-    borderRadius: 5,
-    marginTop: 10,
+  verifyButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 6,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+    fontFamily: 'System',
   },
-  noteText: {
-    fontSize: 12,
-    color: '#666666',
-    textAlign: 'center',
-    marginTop: 10,
-    paddingHorizontal: 20,
+  resendButton: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  resendText: {
+    color: '#007BFF',
+    fontSize: 16,
+    fontFamily: 'System',
   },
 });
 

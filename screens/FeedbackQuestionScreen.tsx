@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
+import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Define the navigation prop type for FeedbackQuestionScreen
 type FeedbackQuestionScreenProps = StackScreenProps<RootStackParamList, 'FeedbackQuestion'>;
@@ -16,7 +19,7 @@ interface Question {
   id: string;
   department: string;
   text: string;
-  type: 'slider' | 'radio';
+  type: 'slider' | 'radio' | 'rating';
   options?: string[]; // For radio button type
 }
 
@@ -33,7 +36,7 @@ const allQuestions: Question[] = [
     id: 'emergency_q2',
     department: 'Emergency',
     text: 'How would you rate the communication of the medical team during your emergency visit?',
-    type: 'slider',
+    type: 'rating',
   },
   {
     id: 'emergency_q3',
@@ -77,7 +80,7 @@ const allQuestions: Question[] = [
     id: 'impatient_q1',
     department: 'Impatient Clinic',
     text: 'How would you rate the attentiveness of the nurses?',
-    type: 'slider',
+    type: 'rating',
   },
   {
     id: 'impatient_q2',
@@ -187,7 +190,7 @@ const allQuestions: Question[] = [
     id: 'mortuary_q1',
     department: 'Mortuary',
     text: 'How would you rate the sensitivity and respect shown by the staff?',
-    type: 'slider',
+    type: 'rating',
   },
   {
     id: 'mortuary_q2',
@@ -209,7 +212,7 @@ const allQuestions: Question[] = [
     id: 'maternity_q1',
     department: 'Maternity',
     text: 'How would you rate the care provided during labor and delivery?',
-    type: 'slider',
+    type: 'rating',
   },
   {
     id: 'maternity_q2',
@@ -275,13 +278,46 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
     }));
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
+    // Check if all questions for the current department are answered
+    const allCurrentQuestionsAnswered = departmentQuestions.every(
+      (question) => answers[question.id] !== undefined
+    );
+
+    if (!allCurrentQuestionsAnswered) {
+      Alert.alert(
+        'Incomplete Feedback',
+        'Please answer all questions for the current department before proceeding.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    // If there are more departments to answer for
     if (currentDepartmentIndex < selectedDepartments.length - 1) {
-      // Move to the next department's questions
-      setCurrentDepartmentIndex(prevIndex => prevIndex + 1);
+      setCurrentDepartmentIndex(currentDepartmentIndex + 1);
+      setAnswers({}); // Clear answers for the new department
     } else {
-      // If all departments are covered, navigate to the comment screen
-      navigation.navigate('Comment', { answers, selectedDepartments });
+      // All departments answered, save feedback and navigate to Comment screen
+      const feedbackEntry = {
+        id: Date.now().toString(), // Unique ID for the feedback entry
+        departments: selectedDepartments, // Array of department names
+        answers: answers,
+        date: new Date().toLocaleDateString(), // Current date
+        status: 'Submitted', // Or 'Draft' if you want to implement that functionality
+      };
+
+      try {
+        const existingFeedback = await AsyncStorage.getItem('feedbackHistory');
+        const feedbackHistory = existingFeedback ? JSON.parse(existingFeedback) : [];
+        feedbackHistory.push(feedbackEntry);
+        await AsyncStorage.setItem('feedbackHistory', JSON.stringify(feedbackHistory));
+        console.log('Feedback saved successfully!');
+      } catch (e) {
+        console.error('Failed to save feedback:', e);
+      }
+
+      navigation.navigate('Comment', { answers: answers, selectedDepartments: selectedDepartments });
     }
   };
 
@@ -303,7 +339,7 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
             <Slider
               style={styles.slider}
               minimumValue={0}
-              maximumValue={10}
+              maximumValue={5}
               step={1}
               value={answers[question.id] || 0}
               onValueChange={(value: number) => handleAnswer(question.id, value)} // Pass question id and value
@@ -331,27 +367,61 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
             ))}
           </View>
         );
+      case 'rating':
+        return (
+          <View style={styles.inputContainer}>
+            <Slider
+              style={styles.slider}
+              minimumValue={0}
+              maximumValue={5}
+              step={1}
+              value={answers[question.id] || 0}
+              onValueChange={(value) => handleAnswer(question.id, value)}
+              minimumTrackTintColor="#007BFF"
+              maximumTrackTintColor="#E0E0E0"
+              thumbTintColor="#007BFF"
+            />
+            <Text style={styles.sliderValue}>
+              {answers[question.id] || 0}
+            </Text>
+          </View>
+        );
       default:
         return null;
     }
   };
 
+  const translations = {
+    en: {
+      title: 'MedFeedback',
+    },
+    sw: {
+      title: 'MedFeedback',
+    },
+  };
+
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#E6F7FF', '#FFFFFF']} // Light blue to white gradient
+      style={styles.container}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={handlePreviousDepartment}> {/* Use handlePreviousDepartment */}
+        <TouchableOpacity onPress={handlePreviousDepartment}>
           <Text style={styles.backButton}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>MedFeedback</Text>
+        <Text style={styles.headerTitle}>{translations[language].title}</Text>
         <TouchableOpacity onPress={toggleLanguage}>
-          <GlobeIcon />
+          <Text style={styles.icon}>🌐</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.contentContainer}> {/* Container for questions */}
-        <Text style={styles.departmentTitle}>{currentDepartment}</Text>
-        <ScrollView> 
+      <ScrollView 
+        style={styles.scrollViewContent}
+        contentContainerStyle={styles.scrollViewContentContainer}
+      >
+        <View style={styles.contentContainer}> {/* Container for questions */}
+          <Text style={styles.departmentTitle}>{currentDepartment}</Text>
           {departmentQuestions.length > 0 ? (
             departmentQuestions.map((question) => (
               <View key={question.id} style={styles.questionContainer}> {/* Wrap question and input */}
@@ -362,58 +432,57 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
           ) : (
             <Text>No questions available for this department.</Text>
           )}
-        </ScrollView>
-      </View>
+        </View>
 
-      {/* Navigation Button */}
-      <View style={styles.navigationButtons}>
-        <TouchableOpacity 
-          style={styles.navButton}
-          onPress={handleContinue}
-        >
-          <Text style={styles.navButtonText}>
-            {currentDepartmentIndex < selectedDepartments.length - 1 ? 'Next Department →' : 'Continue to Comment →'} {/* Dynamic button text */}
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+        {/* Navigation Button */}
+        <View style={styles.navigationButtons}>
+          <TouchableOpacity 
+            style={styles.navButton}
+            onPress={handleContinue}
+          >
+            <Text style={styles.navButtonText}>
+              {currentDepartmentIndex < selectedDepartments.length - 1 ? 'Next Department →' : 'Continue to Comment →'} {/* Dynamic button text */}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E1F5FE', // Light blue background
+    paddingTop: Constants.statusBarHeight + 20, // Adjust for status bar and some padding
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    marginBottom: 30,
   },
   backButton: {
     fontSize: 24,
-    color: '#333',
+    color: '#007BFF',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
   },
   icon: {
     fontSize: 24,
-    color: '#007BFF', // Blue icon color
+    color: '#007BFF',
+  },
+  scrollViewContent: {
+    flex: 1,
+  },
+  scrollViewContentContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+    alignItems: 'center',
   },
   contentContainer:{
     paddingHorizontal: 20,

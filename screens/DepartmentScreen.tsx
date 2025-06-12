@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
+import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 
 // Define the navigation prop type for DepartmentScreen
 type DepartmentScreenProps = StackScreenProps<RootStackParamList, 'Department'>;
@@ -60,29 +62,27 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
   };
 
   const handleContinue = () => {
-    console.log('Selected Departments:', selectedDepartments);
-    
-    // Add validation to ensure at least one department is selected
     if (selectedDepartments.length === 0) {
-      alert('Please select at least one department.');
+      Alert.alert(
+        'No Department Selected',
+        'Please select at least one department to continue.',
+        [{ text: 'OK' }]
+      );
       return;
     }
-    
-    // Navigate to the FeedbackQuestion screen, passing the selected departments
-    navigation.navigate('FeedbackQuestion', { selectedDepartments });
+    navigation.navigate('FeedbackQuestion', { selectedDepartments: selectedDepartments });
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#E6F7FF', '#FFFFFF']}
+      style={styles.container}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
-        </TouchableOpacity>
+        <Text style={styles.icon}>☰</Text>
         <Text style={styles.headerTitle}>{t.title}</Text>
-        <TouchableOpacity onPress={toggleLanguage}>
-          <GlobeIcon />
-        </TouchableOpacity>
+        <Text style={styles.icon}>🌐</Text>
       </View>
 
       <View style={styles.contentContainer}> {/* Container for title, subtitle and list */}
@@ -93,68 +93,71 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
           {departments.map((department, index) => (
             <TouchableOpacity 
               key={index} 
-              style={styles.departmentItem} 
+              style={[
+                styles.departmentItem,
+                selectedDepartments.includes(department) && styles.departmentItemSelected
+              ]} 
               onPress={() => toggleDepartmentSelect(department)}
             >
-              <Text style={styles.departmentText}>{department}</Text>
+              <Text style={[
+                styles.departmentText,
+                selectedDepartments.includes(department) && styles.departmentTextSelected
+              ]}>{department}</Text>
               <View style={[styles.checkbox, selectedDepartments.includes(department) && styles.checkboxSelected]} />
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+        <TouchableOpacity 
+          style={[
+            styles.continueButton,
+            selectedDepartments.length === 0 && styles.continueButtonDisabled
+          ]} 
+          onPress={handleContinue}
+        >
           <Text style={styles.buttonText}>{t.continue}</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E1F5FE',
+    paddingTop: Constants.statusBarHeight + 20,
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  backButton: {
-    fontSize: 24,
-    color: '#333',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+    marginBottom: 30,
   },
   icon: {
     fontSize: 24,
-    color: '#007BFF', // Blue icon color
+    color: '#007BFF',
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#000',
   },
   contentContainer:{
     paddingHorizontal: 20,
     paddingTop: 20,
     flex: 1,
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
   },
   sectionTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#004080',
-    marginBottom: 5,
+    marginBottom: 10,
     textAlign: 'center',
   },
   sectionSubtitle: {
@@ -168,52 +171,60 @@ const styles = StyleSheet.create({
   },
   departmentItem: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    padding: 15,
+    borderRadius: 15,
+    padding: 18,
     marginBottom: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 1.41,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   departmentText: {
     fontSize: 16,
     color: '#333',
+    fontWeight: '500',
   },
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: 4,
+    borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#555',
+    borderColor: '#007BFF',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   checkboxSelected: {
     backgroundColor: '#007BFF',
     borderColor: '#007BFF',
   },
+  departmentItemSelected: {
+    backgroundColor: '#E6F7FF',
+    borderColor: '#007BFF',
+  },
+  departmentTextSelected: {
+    color: '#007BFF',
+  },
   continueButton: {
-    backgroundColor: '#6495ED',
-    paddingVertical: 12,
+    backgroundColor: '#007BFF',
+    paddingVertical: 14,
     paddingHorizontal: 40,
-    borderRadius: 5,
-    marginTop: 20,
+    borderRadius: 10,
+    marginTop: 30,
     marginBottom: 20,
     alignSelf: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 6,
+  },
+  continueButtonDisabled: {
+    backgroundColor: '#CCCCCC',
+    opacity: 0.7,
   },
   buttonText: {
     color: '#FFFFFF',

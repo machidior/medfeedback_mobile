@@ -35,13 +35,9 @@ const FeedbackFormScreen = ({ navigation, route }: FeedbackFormScreenProps) => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>{t.title}</Text>
-        <TouchableOpacity onPress={toggleLanguage}>
-          <Text style={styles.icon}>🌐</Text>
-        </TouchableOpacity>
+        <Text style={styles.icon}>☰</Text>
+        <Text style={styles.headerTitle}>MedFeedback</Text>
+        <Text style={styles.icon}>🌐</Text>
       </View>
 
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -63,36 +59,28 @@ const FeedbackFormScreen = ({ navigation, route }: FeedbackFormScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#B0E0E6',
+    backgroundColor: '#E1F5FE',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    marginBottom: 30,
   },
   backButton: {
     fontSize: 24,
     color: '#333',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
   },
   icon: {
     fontSize: 24,
+    color: '#007BFF', // Blue icon color
   },
   scrollView: {
     flex: 1,

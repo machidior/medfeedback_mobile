@@ -4,7 +4,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 export type RootStackParamList = {
   Welcome: undefined; // Assuming Welcome screen doesn't take params
   Login: undefined; // Assuming Login screen doesn't take params
-  OTP: undefined;     // Assuming OTP screen doesn't take params
+  OTP: { phoneNumber: string; otp: string };     // Assuming OTP screen doesn't take params
   // Home is now part of the Bottom Tabs, access via AppTabs
   // Home: undefined;    // Add Home screen back
   FeedbackForm: undefined;

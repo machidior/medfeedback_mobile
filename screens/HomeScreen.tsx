@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Modal, Alert, TouchableWithoutFeedback } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { RootStackParamList, BottomTabParamList } from '../types';
 import { Calendar } from 'react-native-calendars';
+import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 
 // Define the navigation prop type for HomeScreen when nested in Bottom Tabs
 // This type is useful if HomeScreen could be navigated to directly via the Stack or within the Tabs,
@@ -27,6 +29,8 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [gender, setGender] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [formAs, setFormAs] = useState<string | null>(null);
 
   const translations = {
     en: {
@@ -42,6 +46,7 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
       female: 'Female',
       male: 'Male',
       continue: 'Continue',
+      formNote: 'Note: This form is for feedback about your hospital experience. Your opinion is important to us.',
     },
     sw: {
       title: 'MedFeedback',
@@ -56,6 +61,7 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
       female: 'Mwanamke',
       male: 'Mwanaume',
       continue: 'Endelea',
+      formNote: 'Tukio: Hii fomu ni kwa maoni ya kijijini. Maoni yako ni muhimu kwa kami kukuhudumia vizuri.',
     }
   };
 
@@ -80,48 +86,45 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
     setGender(gender === selectedGender ? null : selectedGender);
   };
 
-  // TODO: Add continue button logic if needed later
-
   const handleContinue = () => {
-    // TODO: Implement validation and navigation
-    console.log('Continue button pressed');
-    // Example validation:
-    // if (!selectedType || !date || gender === null) {
-    //   alert('Please fill out all fields');
-    //   return;
-    // }
-    
-    // Use navigation.getParent() to navigate to a screen in the parent stack navigator
-    navigation.getParent()?.navigate('Department');
+    if (!selectedDate || !gender || !selectedType) {
+      Alert.alert(
+        'Incomplete Form',
+        'Please fill in all fields before continuing.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    navigation.navigate('Department');
+  };
+
+  const formatDate = (date: Date): string => {
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#E6F7FF', '#FFFFFF']}
+      style={styles.container}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <>
-          <TouchableOpacity>
-            <MenuIcon />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>{t.title}</Text>
-          <TouchableOpacity onPress={toggleLanguage}>
-            <GlobeIcon />
-          </TouchableOpacity>
-        </>
+        <Text style={styles.icon}>☰</Text>
+        <Text style={styles.headerTitle}>MedFeedback</Text>
+        <TouchableOpacity onPress={toggleLanguage}>
+          <Text style={styles.icon}>🌐</Text>
+        </TouchableOpacity>
       </View>
-
-      {/* Welcome Section */}
       <View style={styles.welcomeSection}>
-        <>
-          <Text style={styles.welcomeTitle}>{t.welcome}</Text>
-          <Text style={styles.welcomeText}>{t.welcomeSub}</Text>
-        </>
+        <Text style={styles.welcomeTitle}>{t.welcome}</Text>
+        <Text style={styles.welcomeText}>{t.welcomeSub}</Text>
       </View>
-
-      {/* Form Container */}
-      <View style={styles.formBox}> 
+      <View style={styles.formBox}>
         <Text style={styles.formLabel}>{t.formAs}</Text>
-        
         {/* Custom Dropdown Button */}
         <TouchableOpacity 
           style={styles.dropdownButton}
@@ -132,7 +135,6 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
           </Text>
           <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
-
         {/* Dropdown Options List */}
         {showOptions && (
           <View style={styles.dropdownOptions}>
@@ -150,82 +152,88 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
             </TouchableOpacity>
           </View>
         )}
-
-        {/* Date Picker Button */}
-        <Text style={styles.formLabel}>{t.dateAttended}</Text>
+        {/* Date Selection */}
         <TouchableOpacity 
-            style={styles.datePickerButton}
-            onPress={() => setShowDatePicker(true)}
-          >
-          <Text style={date ? styles.dateText : styles.placeholderText}>
-            {date ? date.toLocaleDateString() : '[d/M/y]'}
-          </Text>
-          <Text style={styles.dateIcon}>▼</Text>
-        </TouchableOpacity>
-
-        {/* Custom Calendar Modal */}
-        <Modal
-          animationType="fade"
-          transparent={true}
-          visible={showDatePicker}
-          onRequestClose={() => setShowDatePicker(false)}
+          style={styles.datePickerButton}
+          onPress={() => setShowDatePicker(true)}
         >
-          <TouchableOpacity 
-            style={styles.modalBackground}
-            activeOpacity={1} 
-            onPressOut={() => setShowDatePicker(false)}
-          >
-            <View style={styles.calendarContainer}>
-              <Calendar
-                onDayPress={handleDateSelect}
-                markedDates={date ? { [date.toISOString().split('T')[0]]: { selected: true, disableTouchEvent: true, selectedColor: 'orange' } } : undefined}
-                maxDate={new Date().toISOString().split('T')[0]}
-              />
-            </View>
-          </TouchableOpacity>
-        </Modal>
-
+          <Text style={selectedDate ? styles.dateText : styles.placeholderText}>
+            {selectedDate ? formatDate(selectedDate) : t.dateAttended}
+          </Text>
+          <Text style={styles.dropdownArrow}>▼</Text>
+        </TouchableOpacity>
         {/* Gender Selection */}
         <Text style={styles.formLabel}>{t.gender}</Text>
         <View style={styles.radioGroup}>
           <TouchableOpacity 
-            style={styles.radioButton}
-            onPress={() => toggleGender('Female')}
+            style={[styles.radioButton, gender === 'male' && styles.radioButtonSelected]}
+            onPress={() => setGender('male')}
           >
-            <View style={[styles.radioOuter, gender === 'Female' && styles.radioOuterSelected]}>
-              {gender === 'Female' && <View style={styles.radioInner} />}
-            </View>
-            <Text style={styles.radioLabel}>{t.female}</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity 
-            style={styles.radioButton}
-            onPress={() => toggleGender('Male')}
-          >
-            <View style={[styles.radioOuter, gender === 'Male' && styles.radioOuterSelected]}>
-              {gender === 'Male' && <View style={styles.radioInner} />}
+            <View style={[styles.radioOuter, gender === 'male' && styles.radioOuterSelected]}>
+              {gender === 'male' && <View style={styles.radioInner} />}
             </View>
             <Text style={styles.radioLabel}>{t.male}</Text>
           </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.radioButton, gender === 'female' && styles.radioButtonSelected]}
+            onPress={() => setGender('female')}
+          >
+            <View style={[styles.radioOuter, gender === 'female' && styles.radioOuterSelected]}>
+              {gender === 'female' && <View style={styles.radioInner} />}
+            </View>
+            <Text style={styles.radioLabel}>{t.female}</Text>
+          </TouchableOpacity>
         </View>
-
         {/* Continue Button */}
-        <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
+        <TouchableOpacity 
+          style={styles.continueButton}
+          onPress={handleContinue}
+        >
           <Text style={styles.buttonText}>{t.continue}</Text>
         </TouchableOpacity>
-
+        <Text style={styles.formNote}>
+          {t.formNote}
+        </Text>
       </View>
-
-    </View>
+      {/* Date Picker Modal */}
+      {showDatePicker && (
+        <Modal
+          transparent={true}
+          visible={showDatePicker}
+          onRequestClose={() => setShowDatePicker(false)}
+        >
+          <TouchableWithoutFeedback onPress={() => setShowDatePicker(false)}>
+            <View style={styles.modalBackground}>
+              <View style={styles.calendarContainer}>
+                <Calendar
+                  onDayPress={(day) => {
+                    setSelectedDate(new Date(day.timestamp));
+                    setShowDatePicker(false);
+                  }}
+                  markedDates={selectedDate ? {
+                    [selectedDate.toISOString().split('T')[0]]: { selected: true }
+                  } : {}}
+                  maxDate={new Date().toISOString().split('T')[0]}
+                  theme={{
+                    todayTextColor: '#007BFF',
+                    selectedDayBackgroundColor: '#007BFF',
+                    selectedDayTextColor: '#FFFFFF',
+                  }}
+                />
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+      )}
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E1F5FE',
     alignItems: 'center',
-    paddingTop: 80,
+    paddingTop: Constants.statusBarHeight + 20, // Adjust for status bar and some padding
   },
   header: {
     flexDirection: 'row',
@@ -250,51 +258,45 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   welcomeTitle: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
-    color: '#004080',
+    color: '#007BFF',
   },
   welcomeText: {
     fontSize: 16,
     textAlign: 'center',
-    color: '#555',
-    lineHeight: 22,
+    color: '#333',
   },
   formBox: { 
     backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+    borderRadius: 15,
     padding: 20,
     width: '90%',
-    maxWidth: 400, 
-    alignSelf: 'center',
+    maxWidth: 500, 
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowRadius: 6,
+    elevation: 8,
   },
   formLabel: { 
     fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    marginTop: 15,
+    marginBottom: 10,
     color: '#333',
+    fontWeight: '600',
   },
   dropdownButton: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 5,
-    padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 15,
+    backgroundColor: '#F9F9F9',
   },
   dropdownButtonText: {
     fontSize: 16,
@@ -306,39 +308,31 @@ const styles = StyleSheet.create({
   },
   dropdownArrow: {
     fontSize: 16,
-    color: '#333',
+    color: '#777',
   },
   dropdownOptions: {
     borderWidth: 1,
     borderColor: '#CCCCCC',
-    borderRadius: 5,
-    backgroundColor: '#FFFFFF',
-    marginTop: -15,
+    borderRadius: 8,
+    marginTop: -10, // Overlap with the button
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    backgroundColor: '#FFFFFF',
   },
   dropdownOptionItem: {
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEEEEE',
+    borderBottomColor: '#EEE',
   },
   datePickerButton: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 5,
-    padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: '#CCCCCC',
+    borderRadius: 8,
+    padding: 12,
     marginBottom: 15,
+    backgroundColor: '#F9F9F9',
   },
   dateText: { 
     fontSize: 16,
@@ -347,10 +341,6 @@ const styles = StyleSheet.create({
   placeholderText: {
     fontSize: 16,
     color: '#999',
-  },
-  dateIcon: { 
-    fontSize: 16,
-    color: '#333',
   },
   modalBackground: {
     flex: 1,
@@ -362,42 +352,42 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 10,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    width: '90%',
+    maxWidth: 400,
   },
   radioGroup: {
     flexDirection: 'row',
-    marginTop: 15,
-    marginBottom: 15,
+    justifyContent: 'space-around',
+    marginBottom: 20,
+    width: '100%',
   },
   radioButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 20,
+    backgroundColor: '#F0F8FF', // Light blue background
+    borderWidth: 1,
+    borderColor: '#E0F7FA',
   },
   radioOuter: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#555',
+    borderColor: '#007BFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 8,
+    marginRight: 10,
   },
   radioOuterSelected: {
     borderColor: '#007BFF',
   },
   radioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: '#007BFF',
   },
   radioLabel: {
@@ -406,24 +396,35 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     backgroundColor: '#007BFF',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 5,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 10,
     marginTop: 20,
     alignSelf: 'center',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    shadowRadius: 5,
+    elevation: 6,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  formNote: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginTop: 15,
+    fontStyle: 'italic',
+  },
+  inputError: {
+    borderColor: '#FF3B30',
+  },
+  dropdownOptionText: {
+    fontSize: 16,
+    color: '#333',
   },
 });
 

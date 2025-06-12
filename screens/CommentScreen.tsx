@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
+import { LinearGradient } from 'expo-linear-gradient';
+import Constants from 'expo-constants';
 
 // Define the navigation prop type for CommentScreen
 type CommentScreenProps = StackScreenProps<RootStackParamList, 'Comment'>;
@@ -57,16 +59,15 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
   };
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={['#E6F7FF', '#FFFFFF']}
+      style={styles.container}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backButton}>←</Text>
-        </TouchableOpacity>
+        <Text style={styles.icon}>☰</Text>
         <Text style={styles.headerTitle}>{t.title}</Text>
-        <TouchableOpacity onPress={toggleLanguage}>
-          <GlobeIcon />
-        </TouchableOpacity>
+        <Text style={styles.icon}>🌐</Text>
       </View>
 
       <View style={styles.contentContainer}> {/* Container for comment section */}
@@ -106,49 +107,44 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
           <Text style={styles.submitButtonText}>{t.submit}</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </LinearGradient>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E1F5FE', // Light blue background
+    paddingTop: Constants.statusBarHeight + 20,
+    alignItems: 'center',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    marginBottom: 30,
   },
   backButton: {
     fontSize: 24,
     color: '#333',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     color: '#000',
   },
   icon: {
     fontSize: 24,
-    color: '#007BFF', // Blue icon color
+    color: '#007BFF',
   },
   contentContainer:{
     paddingHorizontal: 20,
     paddingTop: 20,
     flex: 1,
+    width: '100%',
+    maxWidth: 500,
+    alignSelf: 'center',
   },
   commentTitle: {
     fontSize: 20,
@@ -160,13 +156,18 @@ const styles = StyleSheet.create({
   commentInput: {
     borderWidth: 1,
     borderColor: '#CCCCCC',
-    borderRadius: 5,
-    padding: 10,
-    minHeight: 100,
-    textAlignVertical: 'top', // Aligns text to the top on Android
-    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 120,
+    textAlignVertical: 'top',
+    backgroundColor: '#F9F9F9',
     marginBottom: 15,
     fontSize: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   commentTypeLabel: {
     fontSize: 16,
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#007BFF',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#E0F7FA',
   },
   commentTypeButtonSelected: {
     backgroundColor: '#007BFF',
@@ -199,20 +200,17 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   submitButton: {
-    backgroundColor: '#6495ED',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderRadius: 5,
+    backgroundColor: '#007BFF',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 10,
     alignSelf: 'center',
     marginTop: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 3,
+    shadowRadius: 5,
+    elevation: 6,
   },
   submitButtonText: {
     color: '#FFFFFF',
