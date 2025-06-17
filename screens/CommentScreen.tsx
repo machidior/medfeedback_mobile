@@ -75,11 +75,10 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
   const t = translations[language];
 
   const formatDate = (date: Date): string => {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const handleSubmit = () => {
@@ -106,7 +105,46 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
 
   const handleFinalSubmit = async () => {
     try {
+      // Transform the data to match the required API structure
+      const patientData = {
+        gender: gender?.toUpperCase() || 'PREFER_NOT_TO_SAY',
+        dateOfAttendance: selectedDate ? formatDate(selectedDate) : new Date().toLocaleDateString(),
+        feedbacks: questions?.map(question => {
+          const answer = answers?.[question.id];
+          let category = 'COMPLAINT'; // Default category
+          
+          // Set category based on question type
+          if (question.questionType === 'RATING') {
+            category = 'COMPLIMENT';
+          }
+          
+          return {
+            question: question.questionText,
+            questionAnswer: answer || 'Not answered',
+            departmentId: question.departmentId,
+            category: category
+          };
+        }) || [],
+        response: {
+          message: comment,
+          category: commentType?.toUpperCase() || 'SUGGESTION'
+        }
+      };
+
+      console.log('Submitting patient data:', patientData);
+
+      // Submit to the new backend API
+      try {
+        const response = await axios.post("http://192.168.196.134:8089/api/patients/submit", patientData);
+        console.log('Patient data submitted successfully:', response.data);
+      } catch (apiError) {
+        console.error('Failed to submit to backend:', apiError);
+        // Continue with local storage as fallback
+      }
+
+      // Store locally as backup (keeping the old format for compatibility)
       const feedbackData = {
+        id: Date.now().toString(),
         date: selectedDate ? formatDate(selectedDate) : new Date().toLocaleDateString(),
         gender: gender || 'Not specified',
         departments: selectedDepartments,
@@ -116,24 +154,9 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
         status: 'Submitted',
       };
 
-      // Submit to backend API
-      try {
-        const response = await axios.post('http://192.168.196.198:8089/api/feedback/submit', feedbackData);
-        console.log('Feedback submitted to backend successfully:', response.data);
-      } catch (apiError) {
-        console.error('Failed to submit to backend:', apiError);
-        // Continue with local storage as fallback
-      }
-
-      // Store locally as backup
-      const feedbackEntry = {
-        id: Date.now().toString(),
-        ...feedbackData,
-      };
-
       const existingFeedback = await AsyncStorage.getItem('feedbackHistory');
       const feedbackHistory = existingFeedback ? JSON.parse(existingFeedback) : [];
-      feedbackHistory.push(feedbackEntry);
+      feedbackHistory.push(feedbackData);
       await AsyncStorage.setItem('feedbackHistory', JSON.stringify(feedbackHistory));
       
       console.log('Feedback saved locally successfully!');

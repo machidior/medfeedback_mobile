@@ -95,8 +95,6 @@ const NotificationsScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
-        
-        
       </View>
 
       <ScrollView 

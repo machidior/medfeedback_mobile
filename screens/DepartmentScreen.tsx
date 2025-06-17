@@ -57,7 +57,7 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get('http://192.168.196.214:8089/api/departments/all');
+      const response = await axios.get('http://192.168.196.134:8089/api/departments/all');
       setDepartments(response.data);
     } catch (err) {
       console.error('Error fetching departments:', err);
