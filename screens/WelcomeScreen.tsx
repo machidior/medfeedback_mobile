@@ -2,20 +2,15 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
-import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
 import { StatusBar } from 'expo-status-bar';
 
 const WelcomeScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'Welcome'>) => {
   return (
-    <LinearGradient
-      colors={['#E6F7FF', '#FFFFFF']}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       <StatusBar style="dark" />
       <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>MF</Text>
-        <Text style={styles.titleText}>MedFeedback</Text>
+        <Image source={require('../assets/medfeedback_logo.png')} style={styles.logoImage} resizeMode="contain" />
       </View>
       
       <ScrollView 
@@ -45,7 +40,7 @@ const WelcomeScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'Wel
           </View>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -53,33 +48,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Constants.statusBarHeight,
+    backgroundColor: '#FFFFFF',
   },
   logoContainer: {
     alignItems: 'center',
     marginTop: 40,
     marginBottom: 20,
   },
-  logoText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#007BFF',
-    backgroundColor: '#E6F7FF',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    lineHeight: 100,
+  logoImage: {
+    width: 180,
+    height: 40,
     marginBottom: 10,
-    borderWidth: 2,
-    borderColor: '#007BFF',
-  },
-  titleText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#004080',
-    fontFamily: 'System',
-    letterSpacing: 1,
   },
   scrollView: {
     flex: 1,
@@ -106,14 +85,12 @@ const styles = StyleSheet.create({
     color: '#004080',
     marginBottom: 20,
     textAlign: 'center',
-    fontFamily: 'System',
   },
   pageText: {
     fontSize: 18,
     color: '#333',
     textAlign: 'center',
     lineHeight: 26,
-    fontFamily: 'System',
     marginBottom: 20,
   },
   continueButton: {
@@ -132,7 +109,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    fontFamily: 'System',
   },
 });
 

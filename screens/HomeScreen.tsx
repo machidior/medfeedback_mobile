@@ -1,28 +1,24 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Modal, Alert, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Modal, Alert, TouchableWithoutFeedback, Image } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { CompositeScreenProps } from '@react-navigation/native';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { RootStackParamList, BottomTabParamList } from '../types';
 import { Calendar } from 'react-native-calendars';
-import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
 
 // Define the navigation prop type for HomeScreen when nested in Bottom Tabs
-// This type is useful if HomeScreen could be navigated to directly via the Stack or within the Tabs,
-// but when used directly as a component within Tab.Screen, it should expect Tab-specific props.
-// Keeping this definition for reference, but using BottomTabScreenProps directly on the component.
-// type HomeScreenNavigationProp = CompositeScreenProps<
-//   BottomTabScreenProps<BottomTabParamList, 'HomeTab'>, 
-//   StackScreenProps<RootStackParamList> 
-// >;
+type HomeScreenNavigationProp = CompositeScreenProps<
+  BottomTabScreenProps<BottomTabParamList, 'HomeTab'>, 
+  StackScreenProps<RootStackParamList> 
+>;
 
 // Placeholder icons (you might replace these with icons from a library)
 const MenuIcon = () => <Text style={styles.icon}>☰</Text>;
 const GlobeIcon = () => <Text style={styles.icon}>🌐</Text>;
 
-// Use BottomTabScreenProps directly for the component prop type
-const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamList, 'HomeTab'>) => {
+// Use CompositeScreenProps for the component prop type
+const HomeScreen = ({ navigation, route }: HomeScreenNavigationProp) => {
   const [language, setLanguage] = useState<'en' | 'sw'>('en');
   const [selectedType, setSelectedType] = useState<string>('');
   const [showOptions, setShowOptions] = useState(false);
@@ -36,13 +32,12 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
     en: {
       title: 'MedFeedback',
       welcome: 'Welcome to our feedback portal!',
-      welcomeSub: 'Your opinion matters and helps us serve you better.\nThis would only take a few minutes.',
+      welcomeSub: 'Your opinion matters and helps us serve you better. This would only take a few minutes.',
       formAs: 'Who do you fill this form as?',
       selectType: 'Select type',
-      patient: 'Patient',
-      visitor: 'Visitor',
-      dateAttended: 'Date you attended the Hospital:',
-      gender: 'Gender:',
+     
+      dateAttended: 'Date of Attendance',
+      gender: 'Gender',
       female: 'Female',
       male: 'Male',
       continue: 'Continue',
@@ -54,10 +49,9 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
       welcomeSub: 'Maoni yako ni muhimu na yatusaidia kukuhudumia vizuri.\nHii itachukua dakika chache tu.',
       formAs: 'Unajaza fomu hii kama nani?',
       selectType: 'Chagua aina',
-      patient: 'Mgonjwa',
-      visitor: 'Mgeni',
-      dateAttended: 'Tarehe uliyohudhuria Hospitali:',
-      gender: 'Jinsia:',
+      
+      dateAttended: 'Tarehe ya Mahudhurio',
+      gender: 'Jinsia',
       female: 'Mwanamke',
       male: 'Mwanaume',
       continue: 'Endelea',
@@ -87,7 +81,7 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
   };
 
   const handleContinue = () => {
-    if (!selectedDate || !gender || !selectedType) {
+    if (!gender || !selectedDate) {
       Alert.alert(
         'Incomplete Form',
         'Please fill in all fields before continuing.',
@@ -95,7 +89,7 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
       );
       return;
     }
-    navigation.navigate('Department');
+    navigation.navigate('Department', { selectedDate: selectedDate, gender: gender });
   };
 
   const formatDate = (date: Date): string => {
@@ -107,63 +101,32 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
   };
 
   return (
-    <LinearGradient
-      colors={['#E6F7FF', '#FFFFFF']}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.icon}>☰</Text>
-        <Text style={styles.headerTitle}>MedFeedback</Text>
-        <TouchableOpacity onPress={toggleLanguage}>
+        <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
+        <TouchableOpacity onPress={toggleLanguage} style={styles.headerIconRight}>
           <Text style={styles.icon}>🌐</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.welcomeSection}>
-        <Text style={styles.welcomeTitle}>{t.welcome}</Text>
-        <Text style={styles.welcomeText}>{t.welcomeSub}</Text>
-      </View>
+      
       <View style={styles.formBox}>
-        <Text style={styles.formLabel}>{t.formAs}</Text>
-        {/* Custom Dropdown Button */}
-        <TouchableOpacity 
-          style={styles.dropdownButton}
-          onPress={() => setShowOptions(!showOptions)}
-        >
-          <Text style={selectedType ? styles.dropdownButtonText : styles.dropdownPlaceholderText}>
-            {selectedType ? (selectedType === 'patient' ? t.patient : t.visitor) : t.selectType}
-          </Text>
-          <Text style={styles.dropdownArrow}>▼</Text>
-        </TouchableOpacity>
-        {/* Dropdown Options List */}
-        {showOptions && (
-          <View style={styles.dropdownOptions}>
-            <TouchableOpacity 
-              style={styles.dropdownOptionItem}
-              onPress={() => handleOptionSelect('patient')}
-            >
-              <Text>{t.patient}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.dropdownOptionItem}
-              onPress={() => handleOptionSelect('visitor')}
-            >
-              <Text>{t.visitor}</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        <View style={styles.welcomeSection}>
+          <Text style={styles.welcomeTitle}>{t.welcome}</Text>
+          <Text style={styles.welcomeText}>{t.welcomeSub}</Text>
+        </View>
         {/* Date Selection */}
+        <Text style={styles.inputLabel}>{t.dateAttended}</Text>
         <TouchableOpacity 
           style={styles.datePickerButton}
           onPress={() => setShowDatePicker(true)}
         >
           <Text style={selectedDate ? styles.dateText : styles.placeholderText}>
-            {selectedDate ? formatDate(selectedDate) : t.dateAttended}
+            {selectedDate ? formatDate(selectedDate) : "Date"}
           </Text>
-          <Text style={styles.dropdownArrow}>▼</Text>
         </TouchableOpacity>
         {/* Gender Selection */}
-        <Text style={styles.formLabel}>{t.gender}</Text>
+        <Text style={styles.inputLabel}>{t.gender}</Text>
         <View style={styles.radioGroup}>
           <TouchableOpacity 
             style={[styles.radioButton, gender === 'male' && styles.radioButtonSelected]}
@@ -225,7 +188,7 @@ const HomeScreen = ({ navigation, route }: BottomTabScreenProps<BottomTabParamLi
           </TouchableWithoutFeedback>
         </Modal>
       )}
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -233,7 +196,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    paddingTop: Constants.statusBarHeight + 20, // Adjust for status bar and some padding
+    paddingTop: Constants.statusBarHeight + 20,
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -243,14 +207,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 30,
   },
-  icon: {
-    fontSize: 24,
-    color: '#007BFF',
+  headerLogo: {
+    width: 150,
+    height: 32,
   },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
+  headerIconRight: {
+    marginLeft: 'auto',
+  },
+  icon: {
+    fontSize: 18,
+    color: '#000000',
   },
   welcomeSection: {
     paddingHorizontal: 20,
@@ -258,70 +224,36 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   welcomeTitle: {
-    fontSize: 26,
+    fontSize: 18,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
     color: '#007BFF',
   },
   welcomeText: {
-    fontSize: 16,
-    textAlign: 'center',
+    fontSize: 13,
+    textAlign: 'left',
     color: '#333',
   },
   formBox: { 
     backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 20,
-    width: '90%',
+    borderRadius: 20,
+    padding: 28,
+    width: '92%',
     maxWidth: 500, 
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    elevation: 12,
+    marginBottom: 24,
   },
-  formLabel: { 
-    fontSize: 16,
-    marginBottom: 10,
-    color: '#333',
+  inputLabel: {
+    fontSize: 12,
+    color: '#222',
     fontWeight: '600',
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
-    backgroundColor: '#F9F9F9',
-  },
-  dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
-  },
-  dropdownPlaceholderText: {
-    fontSize: 16,
-    color: '#999',
-  },
-  dropdownArrow: {
-    fontSize: 16,
-    color: '#777',
-  },
-  dropdownOptions: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 8,
-    marginTop: -10, // Overlap with the button
-    marginBottom: 15,
-    backgroundColor: '#FFFFFF',
-  },
-  dropdownOptionItem: {
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
+    marginBottom: 8,
+    marginTop: 12,
   },
   datePickerButton: {
     flexDirection: 'row',
@@ -329,18 +261,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#CCCCCC',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 15,
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 18,
     backgroundColor: '#F9F9F9',
   },
   dateText: { 
-    fontSize: 16,
+    fontSize: 15,
     color: '#333',
   },
   placeholderText: {
     fontSize: 16,
     color: '#999',
+  },
+  dropdownArrow: {
+    fontSize: 16,
+    color: '#777',
   },
   modalBackground: {
     flex: 1,
@@ -352,24 +288,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 10,
     padding: 10,
-    width: '90%',
+    width: '80%',
     maxWidth: 400,
   },
   radioGroup: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 20,
+    marginBottom: 24,
     width: '100%',
   },
   radioButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 15,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
     borderRadius: 20,
-    backgroundColor: '#F0F8FF', // Light blue background
+    backgroundColor: '#F0F8FF',
     borderWidth: 1,
     borderColor: '#E0F7FA',
+    marginHorizontal: 6,
+  },
+  radioButtonSelected: {
+    backgroundColor: '#007BFF22',
+    borderColor: '#007BFF',
   },
   radioOuter: {
     width: 20,
@@ -396,15 +337,15 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     backgroundColor: '#007BFF',
-    paddingVertical: 14,
-    paddingHorizontal: 40,
-    borderRadius: 10,
-    marginTop: 20,
-    alignSelf: 'center',
-    shadowColor: '#000',
+    paddingVertical: 18,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10,
+    shadowColor: '#007BFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
     elevation: 6,
   },
   buttonText: {
@@ -413,7 +354,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   formNote: {
-    fontSize: 14,
+    fontSize: 10,
     color: '#666',
     textAlign: 'center',
     marginTop: 15,

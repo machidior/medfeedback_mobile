@@ -59,7 +59,7 @@ const FeedbackFormScreen = ({ navigation, route }: FeedbackFormScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#E1F5FE',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -74,9 +74,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
+    width: 150,
+    height: 32,
   },
   icon: {
     fontSize: 24,

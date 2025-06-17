@@ -1,8 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
-import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
 
 // Define the navigation prop type for ThankYouScreen
@@ -20,15 +19,11 @@ const ThankYouScreen = ({ navigation }: ThankYouScreenProps) => {
   };
 
   return (
-    <LinearGradient
-      colors={['#E6F7FF', '#FFFFFF']}
-      style={styles.container}
-    >
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.icon}>☰</Text>
-        <Text style={styles.headerTitle}>MedFeedback</Text>
-        <Text style={styles.icon}>🌐</Text>
+        <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
+        
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollViewContent}>
@@ -43,7 +38,7 @@ const ThankYouScreen = ({ navigation }: ThankYouScreenProps) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
@@ -52,6 +47,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Constants.statusBarHeight + 20,
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -61,14 +57,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 30,
   },
+  headerLogo: {
+    width: 150,
+    height: 32,
+  },
   icon: {
     fontSize: 24,
     color: '#007BFF',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
   },
   scrollViewContent: {
     flexGrow: 1,

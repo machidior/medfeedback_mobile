@@ -9,9 +9,15 @@ export type RootStackParamList = {
   // Home: undefined;    // Add Home screen back
   FeedbackForm: undefined;
   AppTabs: NavigatorScreenParams<BottomTabParamList>; // Add the screen for the Bottom Tab Navigator
-  Department: undefined; // Add the Department screen
-  FeedbackQuestion: { selectedDepartments: string[] }; // Add the FeedbackQuestion screen with params
-  Comment: { answers: { [key: string]: any }, selectedDepartments: string[] }; // Add the Comment screen with params
+  Department: { selectedDate: Date; gender: string }; // Add date and gender params
+  FeedbackQuestion: { selectedDepartments: string[]; selectedDate: Date; gender: string }; // Add date and gender params
+  Comment: { 
+    answers: { [key: string]: any }; 
+    questions: any[]; // Add questions parameter
+    selectedDepartments: string[]; 
+    selectedDate: Date; 
+    gender: string 
+  }; // Add date and gender params
   ThankYou: undefined; // Add the ThankYou screen
   // Removed Home and AppDrawer
   // Add other screens here as you create them

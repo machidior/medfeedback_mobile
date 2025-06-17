@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList, BottomTabParamList } from './types';
+import { View, Text } from 'react-native';
 
 import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
@@ -17,6 +18,8 @@ import DepartmentScreen from './screens/DepartmentScreen';
 import FeedbackQuestionScreen from './screens/FeedbackQuestionScreen';
 import CommentScreen from './screens/CommentScreen';
 import ThankYouScreen from './screens/ThankYouScreen';
+import { useEffect, useState } from 'react';
+import {  Image, StyleSheet } from 'react-native';
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<BottomTabParamList>();
@@ -86,11 +89,13 @@ function BottomTabNavigator() {
   );
 }
 
-function App() {
+export default function App() {
+
+
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Welcome">
-        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
+      <Stack.Navigator initialRouteName="Login">
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
         <Stack.Screen name="OTP" component={OTPScreen} options={{ headerShown: false }}/>
         <Stack.Screen 
@@ -105,6 +110,7 @@ function App() {
       </Stack.Navigator>
     </NavigationContainer>
   );
+
+  
 }
 
-export default App;

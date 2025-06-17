@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
-import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
+import { theme } from '../theme';
 
 const LoginScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'Login'>) => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -30,16 +30,12 @@ const LoginScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'Login
   };
 
   return (
-    <LinearGradient
-      colors={['#E6F7FF', '#FFFFFF']}
-      style={styles.container}
-    >
-      <View style={styles.logoContainer}>
-        <Text style={styles.logoText}>MF</Text>
-        <Text style={styles.titleText}>MedFeedback</Text>
-      </View>
-
+    <View style={styles.container}>
+        
       <View style={styles.formContainer}>
+      <View style={styles.logoContainer}>
+        <Image source={require('../assets/medfeedback_logo.png')} style={styles.logoImage} resizeMode="contain" />
+      </View>
         <Text style={styles.welcomeText}>Welcome Back!</Text>
         <Text style={styles.subtitleText}>Please enter your phone number to continue</Text>
 
@@ -47,7 +43,7 @@ const LoginScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'Login
           <Text style={styles.inputLabel}>Phone Number</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter your phone number"
+            placeholder="Phone number"
             keyboardType="phone-pad"
             value={phoneNumber}
             onChangeText={setPhoneNumber}
@@ -62,7 +58,9 @@ const LoginScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'Login
           <Text style={styles.buttonText}>Continue</Text>
         </TouchableOpacity>
       </View>
-    </LinearGradient>
+    </View>
+      
+
   );
 };
 
@@ -70,87 +68,81 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Constants.statusBarHeight,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 40,
+    // marginTop: 40,
     marginBottom: 20,
   },
-  logoText: {
-    fontSize: 48,
-    fontWeight: 'bold',
-    color: '#007BFF',
-    backgroundColor: '#E6F7FF',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    lineHeight: 100,
+  logoImage: {
+    width: 260,
+    height: 60,
     marginBottom: 10,
-    borderWidth: 2,
-    borderColor: '#007BFF',
-  },
-  titleText: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    color: '#004080',
-    fontFamily: 'System',
-    letterSpacing: 1,
   },
   formContainer: {
-    flex: 1,
+    // flex: 1,
+    marginTop: 100,
     paddingHorizontal: 30,
-    paddingTop: 40,
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    marginHorizontal: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+    paddingVertical: 32,
   },
   welcomeText: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#004080',
     marginBottom: 10,
-    fontFamily: 'System',
+    textAlign: 'center',
   },
   subtitleText: {
-    fontSize: 16,
+    fontSize: 12,
     color: '#666',
     marginBottom: 30,
-    fontFamily: 'System',
+    textAlign: 'center',
   },
   inputContainer: {
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#333',
     marginBottom: 8,
-    fontFamily: 'System',
+    fontWeight: '600',
   },
   input: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
+    backgroundColor: '#F9F9F9',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
-    fontFamily: 'System',
+    borderColor: '#CCCCCC',
+    borderRadius: 8,
+    padding: 14,
+    fontSize: 15,
   },
   loginButton: {
     backgroundColor: '#007BFF',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: 10,
     alignItems: 'center',
     marginTop: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
     elevation: 6,
   },
   buttonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',
-    fontFamily: 'System',
+    letterSpacing: 1,
   },
 });
 

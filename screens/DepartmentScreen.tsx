@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
-import { LinearGradient } from 'expo-linear-gradient';
 import Constants from 'expo-constants';
+import axios from 'axios';
 
 // Define the navigation prop type for DepartmentScreen
 type DepartmentScreenProps = StackScreenProps<RootStackParamList, 'Department'>;
@@ -12,52 +12,74 @@ type DepartmentScreenProps = StackScreenProps<RootStackParamList, 'Department'>;
 const MenuIcon = () => <Text style={styles.icon}>☰</Text>;
 const GlobeIcon = () => <Text style={styles.icon}>🌐</Text>;
 
-// Dummy data for departments based on the image
-const departments = [
-  'Emergency',
-  'Outpatient Clinic',
-  'Impatient Clinic',
-  'Radiology',
-  'Laboratory',
-  'Pharmacy',
-  'Billing',
-  'Mortuary',
-  'Maternity',
-  'Immunization',
-];
+// Define the Department interface
+interface Department {
+  id: number;
+  name: string;
+  description?: string;
+}
 
 const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
+  const { selectedDate, gender } = route.params;
   const [language, setLanguage] = useState<'en' | 'sw'>('en');
   const [selectedDepartments, setSelectedDepartments] = useState<string[]>([]);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const translations = {
     en: {
       title: 'MedFeedback',
-      selectDepartment: 'Select Department',
+      selectDepartment: 'Department',
       selectDepartmentSub: 'Please select the department you\'d like to provide feedback for:',
       continue: 'Continue',
+      loading: 'Loading departments...',
+      error: 'Failed to load departments',
+      retry: 'Retry',
       // Add translations for department names if needed
     },
     sw: {
       title: 'MedFeedback',
-      selectDepartment: 'Chagua Idara',
+      selectDepartment: 'Idara',
       selectDepartmentSub: 'Tafadhali chagua idara unayotaka kutoa maoni:',
       continue: 'Endelea',
+      loading: 'Inapakia idara...',
+      error: 'Imeshindwa kupakia idara',
+      retry: 'Jaribu tena',
       // Add translations for department names if needed
     }
   };
 
   const t = translations[language];
 
+  // Fetch departments from backend
+  const fetchDepartments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await axios.get('http://192.168.196.214:8089/api/departments/all');
+      setDepartments(response.data);
+    } catch (err) {
+      console.error('Error fetching departments:', err);
+      setError(t.error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'sw' : 'en');
   };
 
-  const toggleDepartmentSelect = (department: string) => {
+  const toggleDepartmentSelect = (departmentName: string) => {
     setSelectedDepartments(prevSelected => 
-      prevSelected.includes(department)
-        ? prevSelected.filter(d => d !== department)
-        : [...prevSelected, department]
+      prevSelected.includes(departmentName)
+        ? prevSelected.filter(d => d !== departmentName)
+        : [...prevSelected, departmentName]
     );
   };
 
@@ -70,40 +92,54 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
       );
       return;
     }
-    navigation.navigate('FeedbackQuestion', { selectedDepartments: selectedDepartments });
+    navigation.navigate('FeedbackQuestion', { 
+      selectedDepartments: selectedDepartments,
+      selectedDate: selectedDate,
+      gender: gender
+    });
   };
 
-  return (
-    <LinearGradient
-      colors={['#E6F7FF', '#FFFFFF']}
-      style={styles.container}
-    >
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.icon}>☰</Text>
-        <Text style={styles.headerTitle}>{t.title}</Text>
-        <Text style={styles.icon}>🌐</Text>
-      </View>
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#007BFF" />
+          <Text style={styles.loadingText}>{t.loading}</Text>
+        </View>
+      );
+    }
 
-      <View style={styles.contentContainer}> {/* Container for title, subtitle and list */}
+    if (error) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryButton} onPress={fetchDepartments}>
+            <Text style={styles.retryButtonText}>{t.retry}</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <>
         <Text style={styles.sectionTitle}>{t.selectDepartment}</Text>
         <Text style={styles.sectionSubtitle}>{t.selectDepartmentSub}</Text>
 
         <ScrollView style={styles.scrollView}> 
           {departments.map((department, index) => (
             <TouchableOpacity 
-              key={index} 
+              key={department.id} 
               style={[
                 styles.departmentItem,
-                selectedDepartments.includes(department) && styles.departmentItemSelected
+                selectedDepartments.includes(department.name) && styles.departmentItemSelected
               ]} 
-              onPress={() => toggleDepartmentSelect(department)}
+              onPress={() => toggleDepartmentSelect(department.name)}
             >
+              <View style={[styles.checkbox, selectedDepartments.includes(department.name) && styles.checkboxSelected]} />
               <Text style={[
                 styles.departmentText,
-                selectedDepartments.includes(department) && styles.departmentTextSelected
-              ]}>{department}</Text>
-              <View style={[styles.checkbox, selectedDepartments.includes(department) && styles.checkboxSelected]} />
+                selectedDepartments.includes(department.name) && styles.departmentTextSelected
+              ]}>{department.name}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -117,8 +153,21 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
         >
           <Text style={styles.buttonText}>{t.continue}</Text>
         </TouchableOpacity>
+      </>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
       </View>
-    </LinearGradient>
+
+      <View style={styles.contentContainer}>
+        {renderContent()}
+      </View>
+    </View>
   );
 };
 
@@ -127,6 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Constants.statusBarHeight + 20,
     alignItems: 'center',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -136,14 +186,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 30,
   },
+  headerLogo: {
+    width: 150,
+    height: 32,
+  },
+  headerIconRight: {
+    marginLeft: 'auto',
+  },
   icon: {
     fontSize: 24,
     color: '#007BFF',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
   },
   contentContainer:{
     paddingHorizontal: 20,
@@ -158,7 +210,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#004080',
     marginBottom: 10,
-    textAlign: 'center',
+    textAlign: 'left',
   },
   sectionSubtitle: {
     fontSize: 16,
@@ -175,7 +227,7 @@ const styles = StyleSheet.create({
     padding: 18,
     marginBottom: 10,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    // justifyContent: 'space-between',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -187,13 +239,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     fontWeight: '500',
+    paddingLeft: 10,
   },
   checkbox: {
-    width: 24,
-    height: 24,
+    width: 20,
+    height: 20,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#007BFF',
+    borderColor: '#333',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -227,6 +280,40 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   buttonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#007BFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginTop: 20,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#FF0000',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#007BFF',
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    marginTop: 20,
+  },
+  retryButtonText: {
     color: '#FFFFFF',
     fontSize: 18,
     fontWeight: 'bold',

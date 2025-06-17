@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -61,17 +60,11 @@ const HistoryScreen = () => {
   });
 
   return (
-    <LinearGradient
-      colors={['#E6F7FF', '#FFFFFF']} // Light blue to white gradient
-      style={styles.container}
-    >
+    <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.icon}>☰</Text>
-        <Text style={styles.headerTitle}>{t.headerTitle}</Text>
-        <TouchableOpacity onPress={toggleLanguage}>
-          <Text style={styles.icon}>🌐</Text>
-        </TouchableOpacity>
+        <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
+        
       </View>
 
       {/* Tab Navigation */}
@@ -111,14 +104,15 @@ const HistoryScreen = () => {
           </View>
         ))}
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: Constants.statusBarHeight + 20, // Adjust for status bar and some padding
+    paddingTop: Constants.statusBarHeight + 20,
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -128,14 +122,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 20,
   },
+  headerLogo: {
+    width: 150,
+    height: 32,
+  },
+  headerIconRight: {
+    marginLeft: 'auto',
+  },
   icon: {
     fontSize: 24,
     color: '#007BFF',
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
   },
   tabContainer: {
     flexDirection: 'row',

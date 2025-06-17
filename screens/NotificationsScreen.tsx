@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -90,17 +90,13 @@ const NotificationsScreen = () => {
   };
 
   return (
-    <LinearGradient
-      colors={['#E6F7FF', '#FFFFFF']} // Light blue to white gradient
-      style={styles.container}
-    >
+   <View style={styles.container}>
+
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.icon}>☰</Text>
-        <Text style={styles.headerTitle}>{t.headerTitle}</Text>
-        <TouchableOpacity onPress={toggleLanguage}>
-          <Text style={styles.icon}>🌐</Text>
-        </TouchableOpacity>
+        <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
+        
+        
       </View>
 
       <ScrollView 
@@ -120,7 +116,7 @@ const NotificationsScreen = () => {
           </View>
         ))}
       </ScrollView>
-    </LinearGradient>
+   </View>
   );
 };
 
@@ -136,6 +132,10 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 20,
     marginBottom: 20,
+  },
+  headerLogo: {
+    width: 150,
+    height: 32,
   },
   icon: {
     fontSize: 24,
