@@ -10,10 +10,10 @@ import axios from 'axios';
 type CommentScreenProps = StackScreenProps<RootStackParamList, 'Comment'>;
 
 const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
-  const { answers, questions, selectedDepartments, selectedDate, gender } = route.params || {};
+  const { answers, questions, selectedDepartments, departmentPriorities, selectedDate, gender } = route.params || {};
   const [language, setLanguage] = useState<'en' | 'sw'>('en');
   const [comment, setComment] = useState('');
-  const [commentType, setCommentType] = useState<'suggestion' | 'compliment' | 'negative' | null>(null);
+  const [commentType, setCommentType] = useState<'suggestion' | 'compliment' | 'complaint' | null>(null);
   const [showReview, setShowReview] = useState(false);
 
   // Debug logging
@@ -21,9 +21,12 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
     answers,
     questions: questions?.length,
     selectedDepartments,
+    departmentPriorities,
     selectedDate,
     gender
   });
+
+  console.log('Department priorities for submission:', departmentPriorities);
 
   const translations = {
     en: {
@@ -109,6 +112,7 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
       const patientData = {
         gender: gender?.toUpperCase() || 'PREFER_NOT_TO_SAY',
         dateOfAttendance: selectedDate ? formatDate(selectedDate) : new Date().toLocaleDateString(),
+        priorities: Array.isArray(departmentPriorities) ? departmentPriorities : [], // String[] array
         feedbacks: questions?.map(question => {
           const answer = answers?.[question.id];
           let category = 'COMPLAINT'; // Default category
@@ -131,23 +135,22 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
         }
       };
 
-      console.log('Submitting patient data:', patientData);
-
-      // Submit to the new backend API
+      // Submit to the backend API
       try {
         const response = await axios.post("http://192.168.196.134:8089/api/patients/submit", patientData);
         console.log('Patient data submitted successfully:', response.data);
-      } catch (apiError) {
+      } catch (apiError: any) {
         console.error('Failed to submit to backend:', apiError);
         // Continue with local storage as fallback
       }
 
-      // Store locally as backup (keeping the old format for compatibility)
+      // Store locally as backup
       const feedbackData = {
         id: Date.now().toString(),
         date: selectedDate ? formatDate(selectedDate) : new Date().toLocaleDateString(),
         gender: gender || 'Not specified',
         departments: selectedDepartments,
+        departmentPriorities: departmentPriorities,
         answers: answers,
         commentType: commentType,
         comment: comment,
@@ -314,11 +317,11 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.commentTypeButton, commentType === 'negative' && styles.commentTypeButtonSelected]}
-              onPress={() => setCommentType('negative')}
+              style={[styles.commentTypeButton, commentType === 'complaint' && styles.commentTypeButtonSelected]}
+              onPress={() => setCommentType('complaint')}
             >
               <Text style={styles.commentTypeIcon}>⚠️</Text>
-              <Text style={[styles.commentTypeButtonText, commentType === 'negative' && styles.commentTypeButtonTextSelected]}>
+              <Text style={[styles.commentTypeButtonText, commentType === 'complaint' && styles.commentTypeButtonTextSelected]}>
                 {t.negative}
               </Text>
             </TouchableOpacity>

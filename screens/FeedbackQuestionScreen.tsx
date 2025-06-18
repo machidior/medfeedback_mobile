@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Image, ActivityIndicator, TextInput } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -29,6 +29,7 @@ interface Department {
   id: number;
   name: string;
   description?: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
 const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenProps) => {
@@ -40,6 +41,8 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [departmentMap, setDepartmentMap] = useState<{ [key: string]: number }>({});
+  const [departmentPriorityMap, setDepartmentPriorityMap] = useState<{ [key: string]: string }>({});
+  const departmentPriorityMapRef = useRef<{ [key: string]: string }>({});
 
   const currentDepartment = selectedDepartments[currentDepartmentIndex];
   const departmentQuestions = allQuestions.filter(q => q.departmentId === departmentMap[currentDepartment]);
@@ -50,12 +53,26 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
       const response = await axios.get('http://192.168.196.134:8089/api/departments/all');
       const departments: Department[] = response.data;
       
+      console.log('Raw department data from API:', departments);
+      
       // Create a map of department names to IDs
       const deptMap: { [key: string]: number } = {};
+      // Create a map of department names to priorities
+      const deptPriorityMap: { [key: string]: string } = {};
+      
       departments.forEach(dept => {
         deptMap[dept.name] = dept.id;
+        // Handle cases where priority might be missing or undefined
+        const priority = dept.priority || 'MEDIUM'; // Default to MEDIUM if priority is missing
+        deptPriorityMap[dept.name] = priority;
+        console.log(`Department: ${dept.name}, ID: ${dept.id}, Priority: ${priority}`);
       });
+      
+      console.log('Department priority mapping:', deptPriorityMap);
+      
       setDepartmentMap(deptMap);
+      setDepartmentPriorityMap(deptPriorityMap);
+      departmentPriorityMapRef.current = deptPriorityMap;
       
       return deptMap;
     } catch (err) {
@@ -284,13 +301,46 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
       } else {
         // All departments completed, navigate to Comment screen
         console.log('All departments completed, navigating to Comment screen');
-        navigation.navigate('Comment', { 
+        
+        // Get department priorities from the department priority map
+        const departmentPriorities = selectedDepartments.map(deptName => {
+          const priority = departmentPriorityMapRef.current[deptName];
+          console.log(`Looking up priority for ${deptName}:`, priority);
+          
+          // If priority is not found in the map, try to get it from the state
+          if (!priority) {
+            const statePriority = departmentPriorityMap[deptName];
+            console.log(`Priority not found in ref, checking state for ${deptName}:`, statePriority);
+            return statePriority || 'MEDIUM'; // Default to MEDIUM if priority not found
+          }
+          
+          return priority;
+        });
+        
+        console.log('Department priority map state:', departmentPriorityMapRef.current);
+        console.log('Selected departments:', selectedDepartments);
+        console.log('Calculated priorities:', departmentPriorities);
+        console.log('Priorities array type:', typeof departmentPriorities);
+        console.log('Priorities array length:', departmentPriorities.length);
+        
+        // Final fallback: if we still don't have priorities, create default ones
+        const finalPriorities = departmentPriorities.length > 0 ? departmentPriorities : selectedDepartments.map(() => 'MEDIUM');
+        console.log('Final priorities being passed:', finalPriorities);
+        console.log('Final priorities type:', typeof finalPriorities);
+        console.log('Final priorities length:', finalPriorities.length);
+        
+        const navigationParams = { 
           answers: answers, 
           questions: allQuestions,
           selectedDepartments: selectedDepartments,
+          departmentPriorities: finalPriorities, // Use final priorities
           selectedDate: selectedDate,
           gender: gender
-        });
+        };
+        
+        console.log('Navigation params being passed:', JSON.stringify(navigationParams, null, 2));
+        
+        navigation.navigate('Comment', navigationParams);
       }
     } else {
       // Show alert that current department questions need to be completed

@@ -15,6 +15,7 @@ export type RootStackParamList = {
     answers: { [key: string]: any }; 
     questions: any[]; // Add questions parameter
     selectedDepartments: string[]; 
+    departmentPriorities: string[]; // Update to string[] for priority values
     selectedDate: Date; 
     gender: string 
   }; // Add date and gender params

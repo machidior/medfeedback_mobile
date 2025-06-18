@@ -17,6 +17,7 @@ interface Department {
   id: number;
   name: string;
   description?: string;
+  priority: 'LOW' | 'MEDIUM' | 'HIGH';
 }
 
 const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
@@ -58,6 +59,7 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
       setLoading(true);
       setError(null);
       const response = await axios.get('http://192.168.196.134:8089/api/departments/all');
+      console.log('Departments fetched with priorities:', response.data);
       setDepartments(response.data);
     } catch (err) {
       console.error('Error fetching departments:', err);
