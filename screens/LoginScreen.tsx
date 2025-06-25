@@ -1,149 +1,106 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
-import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../types';
-import Constants from 'expo-constants';
-import { theme } from '../theme';
+import {
+  View, Text, TextInput, TouchableOpacity,
+  StyleSheet, Alert, Image, TouchableWithoutFeedback, Keyboard
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
 
-const LoginScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'Login'>) => {
+const LoginScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const navigation = useNavigation();
+  const { loginWithPhoneNumber } = useAuth();
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const phoneRegex = /^0\d{9}$/;
-
-    if (phoneNumber.trim() === '') {
-      Alert.alert('Input Required', 'Please enter your phone number.');
-      return;
-    }
-
     if (!phoneRegex.test(phoneNumber)) {
-      Alert.alert('Invalid Phone Number', 'Please enter a valid phone number in the format 0xxxxxxxxx.');
+      Alert.alert('Invalid Phone Number', 'Please enter a valid 10-digit phone number starting with 0.');
       return;
     }
 
-    // Simulate OTP generation (in a real app, this would be sent from a backend)
-    const otp = Math.floor(1000 + Math.random() * 9000).toString(); // Generate a 4-digit OTP
-    console.log(`Generated OTP for ${phoneNumber}: ${otp}`); // For testing purposes
-
-    // If validation passes, navigate to the OTP screen, passing the phone number and OTP
-    navigation.navigate('OTP', { phoneNumber: phoneNumber, otp: otp });
+    const response = await loginWithPhoneNumber(phoneNumber);
+    if (response) {
+      navigation.navigate('OTP', { phoneNumber, otp: response.otp });
+    } else {
+      Alert.alert('Login Failed', 'Could not initiate login. Please try again.');
+    }
   };
 
   return (
-    <View style={styles.container}>
-        
-      <View style={styles.formContainer}>
-      <View style={styles.logoContainer}>
-        <Image source={require('../assets/medfeedback_logo.png')} style={styles.logoImage} resizeMode="contain" />
-      </View>
-        <Text style={styles.welcomeText}>Welcome Back!</Text>
-        <Text style={styles.subtitleText}>Please enter your phone number to continue</Text>
-
-        <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Phone number"
-            keyboardType="phone-pad"
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            maxLength={15}
-          />
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
+        <View style={styles.logoContainer}>
+          <Image source={require('../assets/medfeedback_logo.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
-
-        <TouchableOpacity 
-          style={styles.loginButton}
-          onPress={handleLogin}
-        >
-          <Text style={styles.buttonText}>Continue</Text>
+        <Text style={styles.title}>Welcome</Text>
+        <Text style={styles.subtitle}>Enter your phone number to continue</Text>
+        <TextInput
+          style={styles.input}
+          placeholder="e.g., 0712345678"
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          keyboardType="phone-pad"
+          maxLength={10}
+        />
+        <TouchableOpacity style={styles.button} onPress={handleLogin}>
+          <Text style={styles.buttonText}>Send OTP</Text>
         </TouchableOpacity>
       </View>
-    </View>
-      
-
+    </TouchableWithoutFeedback>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    paddingTop: Constants.statusBarHeight,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-  },
-  logoContainer: {
-    alignItems: 'center',
-    // marginTop: 40,
-    marginBottom: 20,
-  },
-  logoImage: {
-    width: 260,
-    height: 60,
-    marginBottom: 10,
-  },
-  formContainer: {
-    // flex: 1,
-    marginTop: 100,
-    paddingHorizontal: 30,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 20,
-    marginHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 8,
-    paddingVertical: 32,
-  },
-  welcomeText: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#004080',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  subtitleText: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 15,
-    color: '#333',
-    marginBottom: 8,
-    fontWeight: '600',
-  },
-  input: {
-    backgroundColor: '#F9F9F9',
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 15,
-  },
-  loginButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 16,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 6,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: 'bold',
-    letterSpacing: 1,
-  },
+    container: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#f5f5f5',
+      },
+      logoContainer: {
+        marginBottom: 40,
+      },
+      logoImage: {
+        width: 200,
+        height: 100,
+      },
+      title: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        marginBottom: 10,
+        color: '#333',
+      },
+      subtitle: {
+        fontSize: 16,
+        color: '#666',
+        marginBottom: 40,
+      },
+      input: {
+        width: '100%',
+        height: 50,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        paddingHorizontal: 15,
+        marginBottom: 20,
+        fontSize: 16,
+        borderWidth: 1,
+        borderColor: '#ddd',
+      },
+      button: {
+        width: '100%',
+        height: 50,
+        backgroundColor: '#007BFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderRadius: 10,
+        marginTop: 10,
+      },
+      buttonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+      },
 });
 
 export default LoginScreen; 

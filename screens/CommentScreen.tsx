@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { categorizeFeedback, FeedbackCategory, getCategorizationSummary } from '../utils/feedbackCategorizer';
 
 // Define the navigation prop type for CommentScreen
 type CommentScreenProps = StackScreenProps<RootStackParamList, 'Comment'>;
@@ -108,6 +109,9 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
 
   const handleFinalSubmit = async () => {
     try {
+      // Categorize the feedback based on answers and comment
+      const feedbackCategory = categorizeFeedback(questions, answers, comment, commentType);
+      
       // Transform the data to match the required API structure
       const patientData = {
         gender: gender?.toUpperCase() || 'PREFER_NOT_TO_SAY',
@@ -137,7 +141,7 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
 
       // Submit to the backend API
       try {
-        const response = await axios.post("http://192.168.196.134:8089/api/patients/submit", patientData);
+        const response = await axios.post("http://192.168.100.88:8089/api/patients/submit", patientData);
         console.log('Patient data submitted successfully:', response.data);
       } catch (apiError: any) {
         console.error('Failed to submit to backend:', apiError);
@@ -151,10 +155,12 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
         gender: gender || 'Not specified',
         departments: selectedDepartments,
         departmentPriorities: departmentPriorities,
+        questions: questions,
         answers: answers,
         commentType: commentType,
         comment: comment,
         status: 'Submitted',
+        feedbackCategory: feedbackCategory, // Add categorization data
       };
 
       const existingFeedback = await AsyncStorage.getItem('feedbackHistory');
@@ -163,6 +169,7 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
       await AsyncStorage.setItem('feedbackHistory', JSON.stringify(feedbackHistory));
       
       console.log('Feedback saved locally successfully!');
+      console.log('Feedback categorization:', feedbackCategory);
       navigation.navigate('ThankYou');
     } catch (error) {
       console.error('Failed to submit feedback:', error);

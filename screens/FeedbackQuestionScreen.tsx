@@ -50,7 +50,7 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
   // Fetch departments first to get their IDs
   const fetchDepartments = async () => {
     try {
-      const response = await axios.get('http://192.168.196.134:8089/api/departments/all');
+      const response = await axios.get('http://192.168.100.88:8089/api/departments/all');
       const departments: Department[] = response.data;
       
       console.log('Raw department data from API:', departments);
@@ -89,19 +89,19 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
       // Try multiple endpoint formats
       const endpoints = [
         {
-          url: 'http://192.168.196.134:8089/api/departments/department/questions',
+          url: 'http://192.168.100.88:8089/api/departments/department/questions',
           params: { id: departmentId }
         },
         {
-          url: 'http://192.168.196.134:8089/api/departments/department/questions',
+          url: 'http://192.168.100.88:8089/api/departments/department/questions',
           params: { departmentId: departmentId }
         },
         {
-          url: `http://192.168.196.134:8089/api/departments/${departmentId}/questions`,
+          url: `http://192.168.100.88:8089/api/departments/${departmentId}/questions`,
           params: {}
         },
         {
-          url: `http://192.168.196.134:8089/api/questions/department/${departmentId}`,
+          url: `http://192.168.100.88:8089/api/questions/department/${departmentId}`,
           params: {}
         }
       ];

@@ -1,11 +1,9 @@
-import * as React from 'react';
+import 'react-native-gesture-handler';
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
-import { RootStackParamList, BottomTabParamList } from './types';
-import { View, Text } from 'react-native';
-
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { AuthProvider, useAuth } from './contexts/AuthContext'; // Correct path
 import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import OTPScreen from './screens/OTPScreen';
@@ -18,24 +16,20 @@ import DepartmentScreen from './screens/DepartmentScreen';
 import FeedbackQuestionScreen from './screens/FeedbackQuestionScreen';
 import CommentScreen from './screens/CommentScreen';
 import ThankYouScreen from './screens/ThankYouScreen';
-import { useEffect, useState } from 'react';
-import {  Image, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { ActivityIndicator, View, StyleSheet } from 'react-native';
 
-const Stack = createStackNavigator<RootStackParamList>();
-const Tab = createBottomTabNavigator<BottomTabParamList>();
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
 
-function BottomTabNavigator() {
+function MainAppTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        headerShown: false,
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap = 'alert'; // Default icon
-
-          if (route.name === 'HomeTab') {
+          let iconName;
+          if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
-          } else if (route.name === 'Objective') {
-            iconName = focused ? 'bulb' : 'bulb-outline';
           } else if (route.name === 'History') {
             iconName = focused ? 'time' : 'time-outline';
           } else if (route.name === 'Notifications') {
@@ -43,74 +37,67 @@ function BottomTabNavigator() {
           } else if (route.name === 'Settings') {
             iconName = focused ? 'settings' : 'settings-outline';
           }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <Ionicons name={iconName as any} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#007BFF',
-        tabBarInactiveTintColor: '#666',
+        tabBarActiveTintColor: '#007AFF',
+        tabBarInactiveTintColor: 'gray',
+        headerShown: false,
       })}
     >
-      <Tab.Screen 
-        name="HomeTab" 
-        component={HomeScreen as React.ComponentType<BottomTabScreenProps<BottomTabParamList, 'HomeTab'>>}
-        options={{
-          title: 'Home',
-        }}
-      />
-      <Tab.Screen 
-        name="Objective" 
-        component={ObjectiveScreen}
-        options={{
-          title: 'Objective',
-        }}
-      />
-      <Tab.Screen 
-        name="History" 
-        component={HistoryScreen}
-        options={{
-          title: 'History',
-        }}
-      />
-      <Tab.Screen 
-        name="Notifications" 
-        component={NotificationsScreen}
-        options={{
-          title: 'Notifications',
-        }}
-      />
-      <Tab.Screen 
-        name="Settings" 
-        component={SettingsScreen}
-        options={{
-          title: 'Settings',
-        }}
-      />
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="History" component={HistoryScreen} />
+      <Tab.Screen name="Notifications" component={NotificationsScreen} />
+      <Tab.Screen name="Settings" component={SettingsScreen} />
     </Tab.Navigator>
   );
 }
 
-export default function App() {
+function AppNavigator() {
+  const { isAuthenticated, isLoading } = useAuth();
 
-
+  if (isLoading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="OTP" component={OTPScreen} options={{ headerShown: false }}/>
-        <Stack.Screen 
-          name="AppTabs"
-          component={BottomTabNavigator}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen name="Department" component={DepartmentScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="FeedbackQuestion" component={FeedbackQuestionScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="Comment" component={CommentScreen} options={{ headerShown: false }}/>
-        <Stack.Screen name="ThankYou" component={ThankYouScreen} options={{ headerShown: false }}/>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {isAuthenticated ? (
+          <>
+            <Stack.Screen name="MainApp" component={MainAppTabs} />
+            <Stack.Screen name="FeedbackQuestion" component={FeedbackQuestionScreen} />
+            <Stack.Screen name="Comment" component={CommentScreen} />
+            <Stack.Screen name="ThankYou" component={ThankYouScreen} />
+          </>
+        ) : (
+          <>
+            <Stack.Screen name="Welcome" component={WelcomeScreen} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="OTP" component={OTPScreen} />
+          </>
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
-
-  
 }
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppNavigator />
+    </AuthProvider>
+  );
+}
+
+const styles = StyleSheet.create({
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
 
