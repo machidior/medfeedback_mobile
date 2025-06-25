@@ -37,10 +37,10 @@ const LoginScreen = ({ navigation }: StackScreenProps<RootStackParamList, 'Login
         <Image source={require('../assets/medfeedback_logo.png')} style={styles.logoImage} resizeMode="contain" />
       </View>
         <Text style={styles.welcomeText}>Welcome Back!</Text>
-        <Text style={styles.subtitleText}>Please enter your phone number to continue</Text>
+        <Text style={styles.subtitleText}>Please enter your phone number registered in <Text style={{color: '#82D0D0', fontWeight: 'bold'}}>i-care</Text> system.</Text>
 
         <View style={styles.inputContainer}>
-          <Text style={styles.inputLabel}>Phone Number</Text>
+          {/* <Text style={styles.inputLabel}>Phone Number</Text> */}
           <TextInput
             style={styles.input}
             placeholder="Phone number"
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitleText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
     marginBottom: 30,
     textAlign: 'center',
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   loginButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: 'center',

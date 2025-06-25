@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 24,
-    color: '#007BFF', // Blue icon color
+    color: '#82D0D0', // Blue icon color
   },
   scrollView: {
     flex: 1,

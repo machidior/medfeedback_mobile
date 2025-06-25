@@ -6,6 +6,8 @@ import { RootStackParamList } from '../types';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import * as Animatable from 'react-native-animatable';
+import { useIsFocused } from '@react-navigation/native';
 
 // Define the navigation prop type for FeedbackQuestionScreen
 type FeedbackQuestionScreenProps = StackScreenProps<RootStackParamList, 'FeedbackQuestion'>;
@@ -43,14 +45,18 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
   const [departmentMap, setDepartmentMap] = useState<{ [key: string]: number }>({});
   const [departmentPriorityMap, setDepartmentPriorityMap] = useState<{ [key: string]: string }>({});
   const departmentPriorityMapRef = useRef<{ [key: string]: string }>({});
+  const isFocused = useIsFocused();
+  const [animationKey, setAnimationKey] = useState(0);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const currentDepartment = selectedDepartments[currentDepartmentIndex];
   const departmentQuestions = allQuestions.filter(q => q.departmentId === departmentMap[currentDepartment]);
+  
 
   // Fetch departments first to get their IDs
   const fetchDepartments = async () => {
     try {
-      const response = await axios.get('http://192.168.196.134:8089/api/departments/all');
+      const response = await axios.get('http://192.168.229.26:8089/api/departments/all');
       const departments: Department[] = response.data;
       
       console.log('Raw department data from API:', departments);
@@ -89,19 +95,19 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
       // Try multiple endpoint formats
       const endpoints = [
         {
-          url: 'http://192.168.196.134:8089/api/departments/department/questions',
+          url: 'http://192.168.229.26:8089/api/departments/department/questions',
           params: { id: departmentId }
         },
         {
-          url: 'http://192.168.196.134:8089/api/departments/department/questions',
+          url: 'http://192.168.223.112:8089/api/departments/department/questions',
           params: { departmentId: departmentId }
         },
         {
-          url: `http://192.168.196.134:8089/api/departments/${departmentId}/questions`,
+          url: `http://127.0.0.1:8089/api/departments/${departmentId}/questions`,
           params: {}
         },
         {
-          url: `http://192.168.196.134:8089/api/questions/department/${departmentId}`,
+          url: `http://127.0.0.1:8089/api/questions/department/${departmentId}`,
           params: {}
         }
       ];
@@ -205,10 +211,21 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
   }, [selectedDepartments]);
 
   useEffect(() => {
-    // Reset current department index when selected departments change
     setCurrentDepartmentIndex(0);
-    // Don't reset answers - preserve them when navigating
   }, [selectedDepartments]);
+
+  useEffect(() => {
+    if (isFocused) {
+      setAnimationKey(prevKey => prevKey + 1);
+    }
+  }, [isFocused, currentDepartmentIndex]);
+
+  // Scroll to top when department changes
+  useEffect(() => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({ y: 0, animated: true });
+    }
+  }, [currentDepartmentIndex]);
 
   // Clean up invalid answers when questions change
   useEffect(() => {
@@ -407,9 +424,9 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
               step={1}
               value={typeof answers[question.id] === 'number' ? answers[question.id] : 0}
               onValueChange={(value) => handleAnswer(question.id, value)}
-              minimumTrackTintColor="#007BFF"
+              minimumTrackTintColor="#82D0D0"
               maximumTrackTintColor="#E0E0E0"
-              thumbTintColor="#007BFF"
+              thumbTintColor="#82D0D0"
             />
             <View style={styles.sliderLabels}>
               <Text style={styles.sliderLabel}>Poor</Text>
@@ -465,7 +482,7 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
           <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
         </View>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007BFF" />
+          <ActivityIndicator size="large" color="#82D0D0" />
           <Text style={styles.loadingText}>{translations[language].loading}</Text>
         </View>
       </View>
@@ -506,11 +523,12 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
       </View>
 
       <ScrollView 
+        ref={scrollViewRef}
         style={styles.scrollViewContent}
         contentContainerStyle={styles.scrollViewContentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.contentContainer}>
+        <Animatable.View key={animationKey} style={styles.contentContainer}>
           <View style={styles.departmentHeader}>
             <Text style={styles.departmentTitle}>{currentDepartment}</Text>
             <View style={styles.questionCount}>
@@ -519,10 +537,21 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
               </Text>
             </View>
           </View>
+
+          {/* Required Fields Note */}
+          <View style={styles.requiredNoteContainer}>
+            <Text style={styles.requiredNoteText}>* Required fields</Text>
+          </View>
           
           {departmentQuestions.length > 0 ? (
             departmentQuestions.map((question, index) => (
-              <View key={`${currentDepartment}-${question.id || index}-${index}`} style={styles.questionContainer}>
+              <Animatable.View
+                key={`${currentDepartment}-${question.id || index}-${index}`}
+                animation="fadeInUp"
+                duration={600}
+                delay={index * 150}
+                style={styles.questionContainer}
+              >
                 <View style={styles.questionHeader}>
                   <Text style={styles.questionNumber}>Q{index + 1}</Text>
                   <Text style={styles.questionText}>
@@ -531,37 +560,36 @@ const FeedbackQuestionScreen = ({ navigation, route }: FeedbackQuestionScreenPro
                   </Text>
                 </View>
                 {renderInput(question)}
-              </View>
+              </Animatable.View>
             ))
           ) : (
-            <View style={styles.noQuestionsContainer}>
+            <Animatable.View 
+              animation="fadeInUp" 
+              duration={600} 
+              style={styles.noQuestionsContainer}
+            >
               <Text style={styles.noQuestionsText}>{translations[language].noQuestions}</Text>
-            </View>
+            </Animatable.View>
           )}
-        </View>
+
+          {/* Navigation Buttons */}
+          <View style={styles.navigationContainer}>
+            <TouchableOpacity 
+              style={[styles.navButton, styles.navButtonLeft]}
+              onPress={handlePreviousDepartment}
+            >
+              <Text style={styles.navButtonLeftText}>Back</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={[styles.navButton, styles.navButtonRight]}
+              onPress={handleNextDepartment}
+            >
+              <Text style={styles.navButtonText}>Next</Text>
+            </TouchableOpacity>
+          </View>
+        </Animatable.View>
       </ScrollView>
-
-      {/* Required Fields Note */}
-      <View style={styles.requiredNoteContainer}>
-        <Text style={styles.requiredNoteText}>* Required fields</Text>
-      </View>
-
-      {/* Navigation Buttons */}
-      <View style={styles.navigationContainer}>
-        <TouchableOpacity 
-          style={[styles.navButton, styles.navButtonLeft]}
-          onPress={handlePreviousDepartment}
-        >
-          <Text style={styles.navButtonText}>back</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity 
-          style={[styles.navButton, styles.navButtonRight]}
-          onPress={handleNextDepartment}
-        >
-          <Text style={styles.navButtonText}>next</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -574,7 +602,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    // justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
@@ -596,7 +624,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     borderRadius: 3,
   },
   progressText: {
@@ -637,7 +665,7 @@ const styles = StyleSheet.create({
   },
   questionCountText: {
     fontSize: 12,
-    color: '#1976D2',
+    color: '#82D0D0',
     fontWeight: '600',
   },
   questionContainer: {
@@ -654,7 +682,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
     elevation: 5,
     borderLeftWidth: 4,
-    borderLeftColor: '#007BFF',
+    borderLeftColor: '#82D0D0',
   },
   questionHeader: {
     flexDirection: 'row',
@@ -663,7 +691,7 @@ const styles = StyleSheet.create({
   questionNumber: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#007BFF',
+    color: '#82D0D0',
     marginRight: 10,
     minWidth: 25,
   },
@@ -693,7 +721,7 @@ const styles = StyleSheet.create({
   },
   sliderValue: {
     fontSize: 18,
-    color: '#007BFF',
+    color: '#82D0D0',
     fontWeight: 'bold',
     textAlign: 'center',
     minWidth: 30,
@@ -709,7 +737,7 @@ const styles = StyleSheet.create({
   },
   radioOptionSelected: {
     backgroundColor: '#E3F2FD',
-    borderColor: '#007BFF',
+    borderColor: '#82D0D0',
     borderWidth: 1,
   },
   radioOuter: {
@@ -717,7 +745,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 11,
     borderWidth: 2,
-    borderColor: '#007BFF',
+    borderColor: '#82D0D0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -726,7 +754,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
   },
   radioLabel: {
     fontSize: 15,
@@ -734,7 +762,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   radioLabelSelected: {
-    color: '#007BFF',
+    color: '#82D0D0',
     fontWeight: '600',
   },
   noQuestionsContainer: {
@@ -759,33 +787,43 @@ const styles = StyleSheet.create({
   navigationContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 20,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
+    paddingHorizontal: 0,
+    paddingVertical: 30,
+    marginTop: 20,
   },
   navButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    height: 50,
-    minWidth: 60,
     justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    minWidth: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   navButtonLeft: {
-    backgroundColor: '#6C757D',
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
   navButtonRight: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
   },
   navButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
-    marginHorizontal: 8,
+    textTransform: 'capitalize',
+  },
+  navButtonLeftText: {
+    color: '#495057',
+    fontSize: 16,
+    fontWeight: '600',
+    textTransform: 'capitalize',
   },
   arrowIcon: {
     fontSize: 18,
@@ -798,7 +836,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#007BFF',
+    color: '#82D0D0',
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 20,
@@ -815,7 +853,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     padding: 16,
     borderRadius: 25,
   },
@@ -841,17 +879,20 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   requiredNoteContainer: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E9ECEF',
+    paddingHorizontal: 0,
+    paddingVertical: 12,
+    marginBottom: 15,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#82D0D0',
   },
   requiredNoteText: {
     color: '#6C757D',
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '500',
-    textAlign: 'center',
+    textAlign: 'left',
+    paddingLeft: 12,
   },
 });
 

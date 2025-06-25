@@ -42,7 +42,7 @@ const OTPScreen = ({ navigation, route }: StackScreenProps<RootStackParamList, '
         </View>
         <View style={styles.inputContainer}>
           {phoneNumber ? (
-            <Text style={styles.subtitleText}>Enter OTP sent to <Text style={{color: '#007BFF', fontWeight: 'bold'}}>{phoneNumber}</Text></Text>
+            <Text style={styles.subtitleText}>Enter verification code sent to <Text style={{color: '#82D0D0', fontWeight: 'bold'}}>{phoneNumber}</Text></Text>
           ) : (
             <Text style={styles.subtitleText}>Enter the OTP</Text>
           )}
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   otpBoxActive: {
-    borderColor: '#007BFF',
+    borderColor: '#82D0D0',
     backgroundColor: '#E6F7FF',
   },
   otpBoxText: {
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     opacity: 0,
   },
   verifyButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     paddingVertical: 16,
     borderRadius: 10,
     alignItems: 'center',
@@ -184,8 +184,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   resendText: {
-    color: 'red',
+    color: '#AD2F2F',
     fontSize: 14,
+  
   },
 });
 

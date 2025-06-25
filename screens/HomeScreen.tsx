@@ -178,8 +178,8 @@ const HomeScreen = ({ navigation, route }: HomeScreenNavigationProp) => {
                   } : {}}
                   maxDate={new Date().toISOString().split('T')[0]}
                   theme={{
-                    todayTextColor: '#007BFF',
-                    selectedDayBackgroundColor: '#007BFF',
+                    todayTextColor: '#82D0D0',
+                    selectedDayBackgroundColor: '#82D0D0',
                     selectedDayTextColor: '#FFFFFF',
                   }}
                 />
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
-    color: '#007BFF',
+    color: '#004080',
   },
   welcomeText: {
     fontSize: 13,
@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     padding: 28,
     width: '92%',
     maxWidth: 500, 
-    shadowColor: '#000',
+    shadowColor: '#82D0D0',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.12,
     shadowRadius: 16,
@@ -309,40 +309,40 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
   radioButtonSelected: {
-    backgroundColor: '#007BFF22',
-    borderColor: '#007BFF',
+    backgroundColor: '#82D0D022',
+    borderColor: '#82D0D0',
   },
   radioOuter: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#007BFF',
+    borderColor: '#82D0D0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
   },
   radioOuterSelected: {
-    borderColor: '#007BFF',
+    borderColor: '#82D0D0',
   },
   radioInner: {
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
   },
   radioLabel: {
     fontSize: 16,
     color: '#333',
   },
   continueButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     paddingVertical: 18,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
     marginBottom: 10,
-    shadowColor: '#007BFF',
+    shadowColor: '#82D0D0',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.18,
     shadowRadius: 8,

@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   },
   icon: {
     fontSize: 24,
-    color: '#007BFF',
+    color: '#82D0D0',
   },
   scrollViewContent: {
     flexGrow: 1,
@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#4CAF50',
+    backgroundColor: '#82D0D0',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   returnHomeButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 10,
