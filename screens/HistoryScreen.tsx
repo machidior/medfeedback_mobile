@@ -1,241 +1,227 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { RootStackParamList } from '../types'; 
-import { StackNavigationProp } from '@react-navigation/stack';
+import * as Animatable from 'react-native-animatable';
+import { useIsFocused } from '@react-navigation/native';
 
-type HistoryScreenNavigationProp = StackNavigationProp<RootStackParamList, 'History'>;
-
-type Props = {
-  navigation: HistoryScreenNavigationProp;
-};
-
-const HistoryScreen = ({ navigation }: Props) => {
-  const [activeTab, setActiveTab] = useState<'All' | 'Submitted' | 'Draft'>('All');
+const HistoryScreen = ({ navigation }: any) => {
   const [language, setLanguage] = useState<'en' | 'sw'>('en');
   const [feedbackHistory, setFeedbackHistory] = useState<any[]>([]);
-  const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const isFocused = useIsFocused();
+  const [animationKey, setAnimationKey] = useState(0);
 
   useEffect(() => {
-    const loadFeedbackHistory = async () => {
-      try {
-        const storedFeedback = await AsyncStorage.getItem('feedbackHistory');
-        if (storedFeedback) {
-          const parsedFeedback = JSON.parse(storedFeedback);
-          // Sort feedback by date in descending order (most recent first)
-          const sortedFeedback = parsedFeedback.sort((a: any, b: any) => {
-            return new Date(b.date).getTime() - new Date(a.date).getTime();
-          });
-          setFeedbackHistory(sortedFeedback);
-        }
-      } catch (e) {
-        console.error('Failed to load feedback history:', e);
-      }
-    };
-    
-    const unsubscribe = navigation.addListener('focus', () => {
-        loadFeedbackHistory();
-    });
+    if (isFocused) {
+      setAnimationKey(prevKey => prevKey + 1);
+      loadFeedbackHistory();
+    }
+  }, [isFocused]);
 
-    return unsubscribe;
-  }, [navigation]);
+  const loadFeedbackHistory = async () => {
+    try {
+      setLoading(true);
+      const storedFeedback = await AsyncStorage.getItem('feedbackHistory');
+      if (storedFeedback) {
+        const parsedFeedback = JSON.parse(storedFeedback);
+        // Sort feedback by date in descending order (most recent first)
+        const sortedFeedback = parsedFeedback.sort((a: any, b: any) => {
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+        setFeedbackHistory(sortedFeedback);
+      }
+    } catch (e) {
+      console.error('Failed to load feedback history:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const clearAllHistory = async () => {
+    Alert.alert(
+      'Clear All History',
+      'Are you sure you want to delete all feedback history? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete All',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await AsyncStorage.removeItem('feedbackHistory');
+              setFeedbackHistory([]);
+            } catch (e) {
+              console.error('Failed to clear all history:', e);
+              Alert.alert('Error', 'Failed to delete all history');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const translations = {
     en: {
       headerTitle: 'MedFeedback',
-      all: 'All',
-      submitted: 'Submitted',
-      draft: 'Draft',
-      departmentsLabel: 'Departments',
-      statusLabel: 'Status',
-      questionsAndAnswers: 'Questions & Answers',
-      comment: 'Comment',
-      feedbackCategory: 'Feedback Category',
-      positive: 'Positive',
-      negative: 'Negative',
-      neutral: 'Neutral',
+      historyTitle: 'History',
+      noHistory: 'No feedback history found',
+      noHistorySub: 'Your submitted feedback will appear here',
+      viewDetails: 'View Details',
+      date: 'Date',
+      gender: 'Gender',
+      priorities: 'Priorities',
+      clearAll: 'Clear All',
     },
     sw: {
       headerTitle: 'MedFeedback',
-      all: 'Zote',
-      submitted: 'Zilizowasilishwa',
-      draft: 'Rasimu',
-      departmentsLabel: 'Idara',
-      statusLabel: 'Hali',
-      questionsAndAnswers: 'Maswali na Majibu',
-      comment: 'Maoni',
-      feedbackCategory: 'Aina ya Maoni',
-      positive: 'Chanya',
-      negative: 'Hasi',
-      neutral: 'Wastani',
+      historyTitle: 'Historia',
+      noHistory: 'Hakuna historia ya maoni',
+      noHistorySub: 'Maoni yako yaliyowasilishwa yataonekana hapa',
+      viewDetails: 'Ona Maelezo',
+      date: 'Tarehe',
+      gender: 'Jinsia',
+      priorities: 'Vipaumbele',
+      clearAll: 'Futa Zote',
     },
   };
 
   const t = translations[language];
 
-  const toggleLanguage = () => {
-    setLanguage(prevLanguage => (prevLanguage === 'en' ? 'sw' : 'en'));
+  const handleCardPress = (item: any) => {
+    // Navigate to history details screen
+    navigation.navigate('HistoryDetails', { feedbackItem: item });
   };
 
-  const toggleCardExpansion = (cardId: string) => {
-    if (expandedCardId === cardId) {
-      setExpandedCardId(null);
-    } else {
-      setExpandedCardId(cardId);
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Submitted':
+        return '#82D0D0';
+      case 'Draft':
+        return '#FFC107';
+      default:
+        return '#6C757D';
     }
   };
 
-  const filteredFeedback = feedbackHistory.filter((item) => {
-    if (activeTab === 'All') {
-      return true;
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'Submitted':
+        return '✓';
+      case 'Draft':
+        return '📝';
+      default:
+        return '•';
     }
-    return item.status === activeTab; // Assuming status in saved data matches tab names
-  });
+  };
+
+  const renderEmptyState = () => (
+    <Animatable.View 
+      animation="fadeInUp" 
+      duration={600} 
+      style={styles.emptyStateContainer}
+    >
+      <Text style={styles.emptyStateIcon}>📋</Text>
+      <Text style={styles.emptyStateTitle}>{t.noHistory}</Text>
+      <Text style={styles.emptyStateSubtitle}>{t.noHistorySub}</Text>
+    </Animatable.View>
+  );
+
+  const renderFeedbackCard = (item: any, index: number) => (
+    <Animatable.View
+      key={item.id || index}
+      animation="slideInLeft"
+      duration={500}
+      delay={index * 100}
+    >
+      <TouchableOpacity 
+        style={styles.card}
+        onPress={() => handleCardPress(item)}
+        activeOpacity={0.8}
+      >
+        {/* Card Header with Status and Date */}
+        <View style={styles.cardHeader}>
+          <View style={styles.statusBadge}>
+            <Text style={[styles.statusIcon, { color: getStatusColor(item.status) }]}>
+              {getStatusIcon(item.status)}
+            </Text>
+            <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+              {item.status}
+            </Text>
+          </View>
+          <Text style={styles.cardDate}>{formatDate(item.date)}</Text>
+        </View>
+        
+        {/* Main Content - Departments and Key Info */}
+        <View style={styles.cardContent}>
+          <Text style={styles.departmentValue}>
+            {Array.isArray(item.departments) ? item.departments.join(', ') : item.departments}
+          </Text>
+          
+          {item.priorities && (
+            <View style={styles.keyInfoRow}>
+              <View style={styles.keyInfoItem}>
+                <Text style={styles.keyInfoLabel}>{t.priorities}</Text>
+                <Text style={styles.keyInfoValue}>
+                  {Array.isArray(item.priorities) ? item.priorities.join(', ') : item.priorities}
+                </Text>
+              </View>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    </Animatable.View>
+  );
 
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
-        
       </View>
 
-      {/* Tab Navigation */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'All' && styles.activeTabButton]}
-          onPress={() => setActiveTab('All')}
-        >
-          <Text style={[styles.tabText, activeTab === 'All' && styles.activeTabText]}>{t.all}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'Submitted' && styles.activeTabButton]}
-          onPress={() => setActiveTab('Submitted')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Submitted' && styles.activeTabText]}>{t.submitted}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'Draft' && styles.activeTabButton]}
-          onPress={() => setActiveTab('Draft')}
-        >
-          <Text style={[styles.tabText, activeTab === 'Draft' && styles.activeTabText]}>{t.draft}</Text>
-        </TouchableOpacity>
+      {/* History Title and Clear All Button */}
+      <View style={styles.titleContainer}>
+        <View style={styles.titleRow}>
+          <Text style={styles.historyTitle}>{t.historyTitle}</Text>
+          {feedbackHistory.length > 0 && (
+            <TouchableOpacity 
+              style={styles.clearAllButton}
+              onPress={clearAllHistory}
+            >
+              <Text style={styles.clearAllButtonText}>{t.clearAll}</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        <Text style={styles.historySubtitle}>
+          {feedbackHistory.length} feedback submission{feedbackHistory.length !== 1 ? 's' : ''}
+        </Text>
       </View>
 
       {/* Feedback Cards */}
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {filteredFeedback.map((item) => (
-          <TouchableOpacity key={item.id} style={styles.card} onPress={() => toggleCardExpansion(item.id)}>
-            <View style={styles.cardHeader}>
-              <View style={styles.dateContainer}>
-                <Text style={styles.dateLabel}>Date</Text>
-                <Text style={styles.cardDate}>{item.date}</Text>
-              </View>
-              <View style={[styles.statusBadge, item.status === 'Submitted' ? styles.submittedBadge : styles.draftBadge]}>
-                <Text style={styles.statusText}>{item.status}</Text>
-              </View>
-            </View>
-            
-            <View style={styles.cardBody}>
-              <View style={styles.departmentSection}>
-                <Text style={styles.sectionLabel}>Departments</Text>
-                <Text style={styles.departmentText}>
-                  {Array.isArray(item.departments) ? item.departments.join(', ') : item.departments}
-                </Text>
-              </View>
-              
-              {/* Preview summary */}
-              <View style={styles.previewSummary}>
-                {item.questions && item.questions.length > 0 && (
-                  <View style={styles.previewItem}>
-                    <Text style={styles.previewText}>
-                      {item.questions.length} question{item.questions.length !== 1 ? 's' : ''} answered
-                    </Text>
-                  </View>
-                )}
-                {item.comment && (
-                  <View style={styles.previewItem}>
-                    <Text style={styles.previewText} numberOfLines={1}>
-                      {item.comment}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </View>
-            
-            {expandedCardId === item.id && (
-              <View style={styles.cardDetails}>
-                <View style={styles.detailsHeader}>
-                  <Text style={styles.detailsTitle}>Questions & Answers</Text>
-                </View>
-                
-                {item.questions && item.questions.length > 0 ? (
-                  <View style={styles.questionsContainer}>
-                    {item.questions.map((question: any, index: number) => {
-                      const answer = item.answers?.[question.id];
-                      return (
-                        <View key={question.id} style={styles.questionCard}>
-                          <View style={styles.questionHeader}>
-                            <Text style={styles.questionNumber}>Q{index + 1}</Text>
-                            <Text style={styles.questionText}>{question.questionText}</Text>
-                          </View>
-                          <View style={styles.answerContainer}>
-                            <Text style={styles.answerLabel}>Answer:</Text>
-                            <Text style={styles.answerText}>
-                              {answer ? answer : 'Not Answered'}
-                            </Text>
-                          </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-                ) : (
-                  <View style={styles.noDataContainer}>
-                    <Text style={styles.noDataText}>No questions available</Text>
-                  </View>
-                )}
-                
-                {item.comment && (
-                  <View style={styles.commentSection}>
-                    <View style={styles.commentHeader}>
-                      <Text style={styles.commentTitle}>Your Comment</Text>
-                      {item.commentType && (
-                        <View style={styles.commentTypeBadge}>
-                          <Text style={styles.commentTypeText}>{item.commentType}</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={styles.commentContainer}>
-                      <Text style={styles.commentText}>{item.comment}</Text>
-                    </View>
-                  </View>
-                )}
-                
-                {/* Categorization Details */}
-                {item.feedbackCategory && (
-                  <View style={styles.categorizationSection}>
-                    <View style={styles.categorizationHeader}>
-                      <Text style={styles.categorizationTitle}>Analysis Details</Text>
-                    </View>
-                    <View style={styles.categorizationContainer}>
-                      <Text style={styles.categorizationText}>
-                        {item.feedbackCategory.reasoning.join('\n• ')}
-                      </Text>
-                    </View>
-                  </View>
-                )}
-              </View>
-            )}
-            
-            <View style={styles.cardFooter}>
-              <Text style={styles.expandText}>
-                {expandedCardId === item.id ? 'Tap to collapse' : 'Tap to view details'}
-              </Text>
-              <Text style={styles.dropdownArrow}>{expandedCardId === item.id ? '⌃' : '⌄'}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollViewContent}
+      >
+        <Animatable.View key={animationKey} style={{flex: 1, width: '100%'}}>
+          {feedbackHistory.length > 0 ? (
+            feedbackHistory.map((item, index) => renderFeedbackCard(item, index))
+          ) : (
+            renderEmptyState()
+          )}
+        </Animatable.View>
       </ScrollView>
     </View>
   );
@@ -245,11 +231,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Constants.statusBarHeight + 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8F9FA',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    // justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
@@ -259,295 +245,192 @@ const styles = StyleSheet.create({
     width: 150,
     height: 32,
   },
-  headerIconRight: {
-    marginLeft: 'auto',
-  },
-  icon: {
-    fontSize: 24,
-    color: '#007BFF',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginBottom: 20,
+  titleContainer: {
     paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF', // White background for tabs
-    borderRadius: 15,
-    paddingVertical: 10,
-    marginHorizontal: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 20,
   },
-  tabButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 8,
+  titleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
   },
-  activeTabButton: {
-    backgroundColor: '#007BFF',
-  },
-  tabText: {
-    color: '#007BFF',
-    fontSize: 16,
+  historyTitle: {
+    fontSize: 22,
     fontWeight: 'bold',
+    color: '#004080',
+    marginBottom: 4,
   },
-  activeTabText: {
-    color: '#FFFFFF',
+  historySubtitle: {
+    fontSize: 14,
+    color: '#6C757D',
+    fontWeight: '500',
   },
   scrollView: {
     flex: 1,
-    width: '100%',
+  },
+  scrollViewContent: {
     paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 0,
-    marginBottom: 20,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 16,
-    elevation: 12,
-    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 6,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
+    position: 'relative',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
-    paddingBottom: 15,
-    backgroundColor: '#f8f9fa',
-  },
-  dateContainer: {
-    flex: 1,
-  },
-  dateLabel: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  cardDate: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '600',
+    marginBottom: 12,
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    minWidth: 80,
-    alignItems: 'center',
-  },
-  submittedBadge: {
-    backgroundColor: '#d4edda',
-  },
-  draftBadge: {
-    backgroundColor: '#fff3cd',
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#155724',
-  },
-  cardBody: {
-    padding: 20,
-    paddingTop: 15,
-  },
-  departmentSection: {
-    marginBottom: 15,
-  },
-  sectionLabel: {
-    fontSize: 12,
-    color: '#666',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  departmentText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '500',
-  },
-  previewSummary: {
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-    paddingTop: 15,
-  },
-  previewItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
-  },
-  previewText: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-  },
-  cardDetails: {
-    backgroundColor: '#f8f9fa',
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
-  },
-  detailsHeader: {
-    padding: 20,
-    paddingBottom: 15,
-  },
-  detailsTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-  },
-  questionsContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  questionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  questionHeader: {
-    flexDirection: 'row',
-    marginBottom: 12,
-  },
-  questionNumber: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#007BFF',
-    marginRight: 8,
-    minWidth: 25,
-  },
-  questionText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
-    flex: 1,
-    lineHeight: 20,
-  },
-  answerContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
-  },
-  answerLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#666',
-    marginBottom: 4,
-  },
-  answerText: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 18,
-  },
-  noDataContainer: {
-    alignItems: 'center',
-    padding: 40,
-  },
-  noDataText: {
-    fontSize: 14,
-    color: '#999',
-    fontStyle: 'italic',
-  },
-  commentSection: {
-    padding: 20,
-    paddingTop: 0,
-  },
-  commentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  commentTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#333',
-  },
-  commentTypeBadge: {
-    backgroundColor: '#007BFF',
-    paddingHorizontal: 10,
+    backgroundColor: '#F8F9FA',
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
-  commentTypeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textTransform: 'uppercase',
+  statusIcon: {
+    fontSize: 12,
+    marginRight: 4,
   },
-  commentContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  commentText: {
-    fontSize: 14,
-    color: '#333',
-    lineHeight: 20,
-  },
-  categorizationSection: {
-    padding: 20,
-    paddingTop: 0,
-  },
-  categorizationHeader: {
-    marginBottom: 12,
-  },
-  categorizationTitle: {
-    fontSize: 18,
+  statusText: {
+    fontSize: 10,
     fontWeight: '700',
-    color: '#333',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  categorizationContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 16,
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteButtonContainer: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    zIndex: 10,
+  },
+  deleteButton: {
+    width: 32,
+    height: 32,
+    // backgroundColor: '#FF6B6B',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
-    elevation: 2,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 12,
+    minWidth: 120,
+    elevation: 3,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
   },
-  categorizationText: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
+  cardDate: {
+    fontSize: 11,
+    color: '#6C757D',
+    fontWeight: '500',
   },
-  cardFooter: {
+  cardContent: {
+    marginBottom: 0,
+  },
+  departmentValue: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#004080',
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+  keyInfoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
-    paddingTop: 10,
-    backgroundColor: '#f8f9fa',
-    borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
+    marginBottom: 0,
   },
-  expandText: {
-    fontSize: 12,
-    color: '#666',
+  keyInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  keyInfoLabel: {
+    fontSize: 11,
     fontWeight: '500',
+    color: '#495057',
+    marginRight: 4,
   },
-  dropdownArrow: {
-    fontSize: 18,
-    color: '#007BFF',
+  keyInfoValue: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#004080',
+  },
+  clearAllButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    // borderRadius: 8,
+    // backgroundColor: '#82D0D0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    // paddingVertical: 16,
+    // paddingHorizontal: 32,
+    borderRadius: 12,
+    // minWidth: 120,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+    backgroundColor: '#F8F9FA',
+    borderWidth: 1,
+    borderColor: '#E9ECEF',
+  },
+  clearAllButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    // color: '#FFFFFF',
+    color: '#495057',
+    // fontSize: 16,
+    // fontWeight: '600',
+    textTransform: 'capitalize',
+    
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyStateIcon: {
+    fontSize: 64,
+    marginBottom: 20,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
     fontWeight: 'bold',
+    color: '#495057',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  emptyStateSubtitle: {
+    fontSize: 16,
+    color: '#6C757D',
+    textAlign: 'center',
+    paddingHorizontal: 40,
   },
 });
 

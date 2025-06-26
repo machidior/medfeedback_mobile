@@ -2,7 +2,7 @@ import { NavigatorScreenParams } from '@react-navigation/native';
 
 // Define the type for your root stack navigator params
 export type RootStackParamList = {
-  Welcome: undefined; // Assuming Welcome screen doesn't take params
+  AnimatedSplash: undefined;
   Login: undefined; // Assuming Login screen doesn't take params
   OTP: { phoneNumber: string; otp: string };     // Assuming OTP screen doesn't take params
   // Home is now part of the Bottom Tabs, access via AppTabs
@@ -20,6 +20,8 @@ export type RootStackParamList = {
     gender: string 
   }; // Add date and gender params
   ThankYou: undefined; // Add the ThankYou screen
+  HistoryDetails: { feedbackItem: any }; // Add HistoryDetails screen with feedbackItem parameter
+  NotificationDetails: { notification: any }; // Add NotificationDetails screen with notification parameter
   // Removed Home and AppDrawer
   // Add other screens here as you create them
 };

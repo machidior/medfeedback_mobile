@@ -4,6 +4,8 @@ import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import Constants from 'expo-constants';
 import axios from 'axios';
+import * as Animatable from 'react-native-animatable';
+import { useIsFocused } from '@react-navigation/native';
 
 // Define the navigation prop type for DepartmentScreen
 type DepartmentScreenProps = StackScreenProps<RootStackParamList, 'Department'>;
@@ -27,6 +29,8 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isFocused = useIsFocused();
+  const [animationKey, setAnimationKey] = useState(0);
 
   const translations = {
     en: {
@@ -53,12 +57,11 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
 
   const t = translations[language];
 
-  // Fetch departments from backend
   const fetchDepartments = async () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get('http://192.168.100.88:8089/api/departments/all');
+      const response = await axios.get('http://192.168.229.26:8089/api/departments/all');
       console.log('Departments fetched with priorities:', response.data);
       setDepartments(response.data);
     } catch (err) {
@@ -72,13 +75,19 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
   useEffect(() => {
     fetchDepartments();
   }, []);
+  
+  useEffect(() => {
+    if (isFocused) {
+      setAnimationKey(prevKey => prevKey + 1);
+    }
+  }, [isFocused]);
 
   const toggleLanguage = () => {
     setLanguage(language === 'en' ? 'sw' : 'en');
   };
 
   const toggleDepartmentSelect = (departmentName: string) => {
-    setSelectedDepartments(prevSelected => 
+    setSelectedDepartments(prevSelected =>
       prevSelected.includes(departmentName)
         ? prevSelected.filter(d => d !== departmentName)
         : [...prevSelected, departmentName]
@@ -105,7 +114,7 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
     if (loading) {
       return (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#007BFF" />
+          <ActivityIndicator size="large" color="#82D0D0" />
           <Text style={styles.loadingText}>{t.loading}</Text>
         </View>
       );
@@ -123,39 +132,52 @@ const DepartmentScreen = ({ navigation, route }: DepartmentScreenProps) => {
     }
 
     return (
-      <>
-        <Text style={styles.sectionTitle}>{t.selectDepartment}</Text>
-        <Text style={styles.sectionSubtitle}>{t.selectDepartmentSub}</Text>
+      <Animatable.View key={animationKey} style={{flex: 1, width: '100%'}}>
+        <Text style={styles.sectionTitle}>
+          {t.selectDepartment}
+        </Text>
+        <Text style={styles.sectionSubtitle}>
+          {t.selectDepartmentSub}
+        </Text>
 
-        <ScrollView style={styles.scrollView}> 
+        <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}> 
           {departments.map((department, index) => (
-            <TouchableOpacity 
-              key={department.id} 
-              style={[
-                styles.departmentItem,
-                selectedDepartments.includes(department.name) && styles.departmentItemSelected
-              ]} 
-              onPress={() => toggleDepartmentSelect(department.name)}
+            <Animatable.View
+              animation="slideInLeft"
+              duration={500}
+              delay={index * 100}
+              key={department.id}
             >
-              <View style={[styles.checkbox, selectedDepartments.includes(department.name) && styles.checkboxSelected]} />
-              <Text style={[
-                styles.departmentText,
-                selectedDepartments.includes(department.name) && styles.departmentTextSelected
-              ]}>{department.name}</Text>
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.departmentItem,
+                  selectedDepartments.includes(department.name) && styles.departmentItemSelected
+                ]} 
+                onPress={() => toggleDepartmentSelect(department.name)}
+              >
+                <View style={[styles.checkbox, selectedDepartments.includes(department.name) && styles.checkboxSelected]} />
+                <Text style={[
+                  styles.departmentText,
+                  selectedDepartments.includes(department.name) && styles.departmentTextSelected
+                ]}>{department.name}</Text>
+              </TouchableOpacity>
+            </Animatable.View>
           ))}
         </ScrollView>
 
-        <TouchableOpacity 
-          style={[
-            styles.continueButton,
-            selectedDepartments.length === 0 && styles.continueButtonDisabled
-          ]} 
-          onPress={handleContinue}
-        >
-          <Text style={styles.buttonText}>{t.continue}</Text>
-        </TouchableOpacity>
-      </>
+        <Animatable.View animation="bounceIn" duration={800} delay={600}>
+          <TouchableOpacity 
+            style={[
+              styles.continueButton,
+              selectedDepartments.length === 0 && styles.continueButtonDisabled
+            ]} 
+            onPress={handleContinue}
+            disabled={selectedDepartments.length === 0}
+          >
+            <Text style={styles.buttonText}>{t.continue}</Text>
+          </TouchableOpacity>
+        </Animatable.View>
+      </Animatable.View>
     );
   };
 
@@ -253,18 +275,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxSelected: {
-    backgroundColor: '#007BFF',
-    borderColor: '#007BFF',
+    backgroundColor: '#82D0D0',
+    borderColor: '#82D0D0',
   },
   departmentItemSelected: {
     backgroundColor: '#E6F7FF',
-    borderColor: '#007BFF',
+    borderColor: '#82D0D0',
   },
   departmentTextSelected: {
-    color: '#007BFF',
+    color: '#82D0D0',
   },
   continueButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 10,
@@ -292,7 +314,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loadingText: {
-    color: '#007BFF',
+    color: '#82D0D0',
     fontSize: 18,
     fontWeight: 'bold',
     marginTop: 20,
@@ -309,7 +331,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 10,

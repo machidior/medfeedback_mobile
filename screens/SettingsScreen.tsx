@@ -1,34 +1,31 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Switch, Alert } from 'react-native';
 import Constants from 'expo-constants';
-import { StackScreenProps } from '@react-navigation/stack';
-import { RootStackParamList } from '../types';
-import { useAuth } from '../contexts/AuthContext';
-import { Ionicons } from '@expo/vector-icons';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
+import { BottomTabParamList } from '../types';
 
-type SettingsScreenProps = StackScreenProps<RootStackParamList, 'Settings'>;
+type SettingsScreenProps = BottomTabScreenProps<BottomTabParamList, 'Settings'>;
 
 const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
-  const { user, logout } = useAuth();
   const [language, setLanguage] = useState<'en' | 'sw'>('en');
-  const [userName, setUserName] = useState('Robert Msogoya');
-  const [userEmail, setUserEmail] = useState('robertmsogoya2@gmail.com');
-  const [userPhone, setUserPhone] = useState('+255746008941');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [dataSaver, setDataSaver] = useState(false);
 
   const translations = {
     en: {
       headerTitle: 'MedFeedback',
-      profileTitle: 'User Profile',
-      nameLabel: 'Name:',
-      emailLabel: 'Email:',
-      phoneLabel: 'Phone Number:',
-      saveChanges: 'Save Changes',
-      accountSettings: 'Account Settings',
-      changePassword: 'Change Password',
-      privacyPolicy: 'Privacy Policy',
-      notificationPreferences: 'Notification Preferences',
-      enableNotifications: 'Enable Notifications',
-      soundAlerts: 'Sound Alerts',
+      settings: 'Settings',
+      language: 'Language',
+      theme: 'Dark Mode',
+      notifications: 'Notifications',
+      sound: 'Sound',
+      vibration: 'Vibration',
+      dataSaver: 'Data Saver',
+      clearCache: 'Clear Cache',
+      helpSupport: 'Help & Support',
       appInformation: 'App Information',
       version: 'Version:',
       aboutApp: 'About MedFeedback',
@@ -36,17 +33,15 @@ const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
     },
     sw: {
       headerTitle: 'MedFeedback',
-      profileTitle: 'Wasifu wa Mtumiaji',
-      nameLabel: 'Jina:',
-      emailLabel: 'Barua pepe:',
-      phoneLabel: 'Namba ya Simu:',
-      saveChanges: 'Hifadhi Mabadiliko',
-      accountSettings: 'Mipangilio ya Akaunti',
-      changePassword: 'Badilisha Nenosiri',
-      privacyPolicy: 'Sera ya Faragha',
-      notificationPreferences: 'Mapendekezo ya Arifa',
-      enableNotifications: 'Washa Arifa',
-      soundAlerts: 'Arifa za Sauti',
+      settings: 'Mipangilio',
+      language: 'Lugha',
+      theme: 'Muda wa Giza',
+      notifications: 'Arifa',
+      sound: 'Sauti',
+      vibration: 'Mtikisiko',
+      dataSaver: 'Hifadhi Data',
+      clearCache: 'Futa Akiba',
+      helpSupport: 'Msaada & Usaidizi',
       appInformation: 'Taarifa za Programu',
       version: 'Toleo:',
       aboutApp: 'Kuhusu MedFeedback',
@@ -56,131 +51,147 @@ const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
 
   const t = translations[language];
 
-  const toggleLanguage = () => {
-    setLanguage(prevLanguage => (prevLanguage === 'en' ? 'sw' : 'en'));
-  };
-
-  const handleSaveChanges = () => {
-    // Implement save logic here
-    console.log('Saving changes:', { userName, userEmail, userPhone });
-    alert('Profile changes saved!');
-  };
-
-  const handleLogout = () => {
+  const handleClearCache = () => {
     Alert.alert(
-      "Log Out",
-      "Are you sure you want to log out?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { text: "Log Out", onPress: () => logout(), style: "destructive" }
-      ]
+      t.clearCache,
+      language === 'en' ? 'App cache cleared!' : 'Akiba ya programu imefutwa!'
     );
   };
 
-  const handleOptionPress = (option: string) => {
-    console.log(`${option} pressed`);
-    // Implement navigation or actions based on option
-    if (option === 'changePassword') {
-      alert('Change Password option pressed');
-    } else if (option === 'privacyPolicy') {
-      alert('Privacy Policy option pressed');
-    } else if (option === 'aboutApp') {
-      alert('About MedFeedback option pressed');
-    }
+  const handleHelpSupport = () => {
+    Alert.alert(
+      t.helpSupport,
+      language === 'en' ? 'Contact support at support@medfeedback.com' : 'Wasiliana na msaada kupitia support@medfeedback.com'
+    );
+  };
+
+  const handleLogout = () => {
+    navigation.getParent()?.navigate('Login');
   };
 
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Image source={require('../assets/medfeedback_logo.png')} style={styles.headerLogo} resizeMode="contain" />
+      </View>
+
+      {/* Title */}
+      <Text style={styles.screenTitle}>{t.settings}</Text>
+
+      <ScrollView 
+        style={styles.scrollViewContent}
+        contentContainerStyle={styles.scrollViewContentContainer}
+      >
+        {/* Language Section */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.languageRow}>
+            <Text style={styles.languageLabel}>{t.language}</Text>
+            <View style={styles.languageSegmentedControl}>
+              <TouchableOpacity
+                style={[styles.languageSegment, language === 'en' && styles.languageSegmentActive]}
+                onPress={() => setLanguage('en')}
+              >
+                <Text style={[styles.languageSegmentText, language === 'en' && styles.languageSegmentTextActive]}>EN</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.languageSegment, language === 'sw' && styles.languageSegmentActive]}
+                onPress={() => setLanguage('sw')}
+              >
+                <Text style={[styles.languageSegmentText, language === 'sw' && styles.languageSegmentTextActive]}>SW</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
 
-        <ScrollView 
-          style={styles.scrollViewContent}
-          contentContainerStyle={styles.scrollViewContentContainer}
-        >
-          {/* User Profile Section */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>{t.profileTitle}</Text>
-
-            <Text style={styles.label}>{t.nameLabel}</Text>
-            <TextInput
-              style={styles.input}
-              value={userName}
-              onChangeText={setUserName}
-              placeholder={t.nameLabel}
+        {/* Appearance Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>{t.theme}</Text>
+          <View style={styles.toggleRow}>
+            <Text style={styles.optionText}>{t.theme}</Text>
+            <Switch
+              value={darkMode}
+              onValueChange={setDarkMode}
+              thumbColor={darkMode ? '#82D0D0' : '#ccc'}
+              trackColor={{ false: '#eee', true: '#b2eaea' }}
             />
+          </View>
+        </View>
 
-            <Text style={styles.label}>{t.emailLabel}</Text>
-            <TextInput
-              style={styles.input}
-              value={userEmail}
-              onChangeText={setUserEmail}
-              placeholder={t.emailLabel}
-              keyboardType="email-address"
-              autoCapitalize="none"
+        {/* Notifications Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>{t.notifications}</Text>
+          <View style={styles.toggleRow}>
+            <Text style={styles.optionText}>{t.notifications}</Text>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={setNotificationsEnabled}
+              thumbColor={notificationsEnabled ? '#82D0D0' : '#ccc'}
+              trackColor={{ false: '#eee', true: '#b2eaea' }}
             />
-
-            <Text style={styles.label}>{t.phoneLabel}</Text>
-            <TextInput
-              style={styles.input}
-              value={userPhone}
-              onChangeText={setUserPhone}
-              placeholder={t.phoneLabel}
-              keyboardType="phone-pad"
+          </View>
+          <View style={styles.toggleRow}>
+            <Text style={styles.optionText}>{t.sound}</Text>
+            <Switch
+              value={soundEnabled}
+              onValueChange={setSoundEnabled}
+              thumbColor={soundEnabled ? '#82D0D0' : '#ccc'}
+              trackColor={{ false: '#eee', true: '#b2eaea' }}
             />
-
-            <TouchableOpacity style={styles.saveButton} onPress={handleSaveChanges}>
-              <Text style={styles.buttonText}>{t.saveChanges}</Text>
-            </TouchableOpacity>
           </View>
-
-          {/* Account Settings Section */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>{t.accountSettings}</Text>
-            <TouchableOpacity style={styles.optionButton} onPress={() => handleOptionPress('changePassword')}>
-              <Text style={styles.optionText}>{t.changePassword}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.optionButton} onPress={() => handleOptionPress('privacyPolicy')}>
-              <Text style={styles.optionText}>{t.privacyPolicy}</Text>
-            </TouchableOpacity>
+          <View style={styles.toggleRow}>
+            <Text style={styles.optionText}>{t.vibration}</Text>
+            <Switch
+              value={vibrationEnabled}
+              onValueChange={setVibrationEnabled}
+              thumbColor={vibrationEnabled ? '#82D0D0' : '#ccc'}
+              trackColor={{ false: '#eee', true: '#b2eaea' }}
+            />
           </View>
+        </View>
 
-          {/* Notification Preferences Section */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>{t.notificationPreferences}</Text>
-            <TouchableOpacity style={styles.optionButton} onPress={() => handleOptionPress('enableNotifications')}>
-              <Text style={styles.optionText}>{t.enableNotifications}</Text>
-              {/* Add a toggle switch here */}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.optionButton} onPress={() => handleOptionPress('soundAlerts')}>
-              <Text style={styles.optionText}>{t.soundAlerts}</Text>
-              {/* Add a toggle switch here */}
-            </TouchableOpacity>
+        {/* Data Usage Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>{t.dataSaver}</Text>
+          <View style={styles.toggleRow}>
+            <Text style={styles.optionText}>{t.dataSaver}</Text>
+            <Switch
+              value={dataSaver}
+              onValueChange={setDataSaver}
+              thumbColor={dataSaver ? '#82D0D0' : '#ccc'}
+              trackColor={{ false: '#eee', true: '#b2eaea' }}
+            />
           </View>
+        </View>
 
-          {/* App Information Section */}
-          <View style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>{t.appInformation}</Text>
-            <View style={styles.infoRow}>
-              <Text style={styles.label}>{t.version}</Text>
-              <Text style={styles.infoText}>1.0.0</Text>
-            </View>
-            <TouchableOpacity style={styles.optionButton} onPress={() => handleOptionPress('aboutApp')}>
-              <Text style={styles.optionText}>{t.aboutApp}</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Logout Button */}
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={24} color="#fff" />
-            <Text style={styles.logoutButtonText}>{t.logout}</Text>
+        {/* Utility Section */}
+        <View style={styles.sectionContainer}>
+          <TouchableOpacity style={styles.optionButton} onPress={handleClearCache}>
+            <Text style={styles.optionText}>{t.clearCache}</Text>
           </TouchableOpacity>
-        </ScrollView>
-      </View>
-    </TouchableWithoutFeedback>
+          <TouchableOpacity style={styles.optionButton} onPress={handleHelpSupport}>
+            <Text style={styles.optionText}>{t.helpSupport}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* App Information Section */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>{t.appInformation}</Text>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>{t.version}</Text>
+            <Text style={styles.infoText}>1.0.0</Text>
+          </View>
+          <TouchableOpacity style={styles.optionButton} onPress={() => Alert.alert(t.aboutApp, 'MedFeedback v1.0.0') }>
+            <Text style={styles.optionText}>{t.aboutApp}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Logout Button */}
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutButtonText}>{t.logout}</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
@@ -188,26 +199,27 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingTop: Constants.statusBarHeight + 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F4F6F8',
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginBottom: 10,
+    marginTop: 10,
   },
   headerLogo: {
     width: 150,
     height: 32,
   },
-  headerIconRight: {
-    marginLeft: 'auto',
-  },
-  icon: {
-    fontSize: 24,
-    color: '#007BFF',
+  screenTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#82D0D0',
   },
   scrollViewContent: {
     flex: 1,
@@ -220,61 +232,41 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 15,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 18,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.07,
+    shadowRadius: 4,
+    elevation: 3,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 15,
-    textAlign: 'center',
-    color: '#004080',
+    textAlign: 'left',
+    color: '#82D0D0',
   },
   label: {
-    fontSize: 16,
+    fontSize: 15,
     marginBottom: 5,
     color: '#333',
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#CCCCCC',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 15,
-    width: '100%',
-    backgroundColor: '#F9F9F9',
-  },
-  saveButton: {
-    backgroundColor: '#007BFF',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 10,
-    marginTop: 10,
-    alignSelf: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
-    elevation: 6,
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
   optionButton: {
-    paddingVertical: 12,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#EEE',
   },
   optionText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#333',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
   },
   infoRow: {
     flexDirection: 'row',
@@ -285,24 +277,62 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EEE',
   },
   infoText: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#555',
   },
   logoutButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#d9534f',
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+    backgroundColor: '#FF6347',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
     borderRadius: 10,
-    width: '100%',
+    marginTop: 20,
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.13,
+    shadowRadius: 3,
+    elevation: 2,
   },
   logoutButtonText: {
-    color: '#fff',
-    fontSize: 18,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: 'bold',
-    marginLeft: 10,
+  },
+  languageRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  languageLabel: {
+    fontSize: 15,
+    marginBottom: 5,
+    color: '#333',
+  },
+  languageSegmentedControl: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+  },
+  languageSegment: {
+    paddingVertical: 6,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    backgroundColor: '#E0E0E0',
+  },
+  languageSegmentActive: {
+    backgroundColor: '#82D0D0',
+  },
+  languageSegmentText: {
+    color: '#555',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+  languageSegmentTextActive: {
+    color: '#fff',
   },
 });
 

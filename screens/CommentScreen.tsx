@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Image, Alert } from 'react-native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../types';
 import Constants from 'expo-constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-import { categorizeFeedback, FeedbackCategory, getCategorizationSummary } from '../utils/feedbackCategorizer';
 
 // Define the navigation prop type for CommentScreen
 type CommentScreenProps = StackScreenProps<RootStackParamList, 'Comment'>;
@@ -35,7 +34,7 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
       commentTitle: 'Share Your Experience',
       commentSubtitle: 'Help us improve our services by sharing your feedback',
       commentPlaceholder: 'Comment here...',
-      commentTypeLabel: 'What type of feedback is this?',
+      commentTypeLabel: 'Type of Comment:',
       suggestion: 'Suggestion',
       compliment: 'Compliment',
       negative: 'Complaint',
@@ -57,7 +56,7 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
       commentTitle: 'Shiriki Uzoefu Wako',
       commentSubtitle: 'Tusaidie kuboresha huduma zetu kwa kushiriki maoni yako',
       commentPlaceholder: 'Tuambie kuhusu uzoefu wako hospitalini...',
-      commentTypeLabel: 'Maoni yako ni ya aina gani?',
+      commentTypeLabel: 'Aina Ya Maoni:',
       suggestion: 'Pendekezo',
       compliment: 'Pongezi',
       negative: 'Wasiwasi',
@@ -109,9 +108,6 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
 
   const handleFinalSubmit = async () => {
     try {
-      // Categorize the feedback based on answers and comment
-      const feedbackCategory = categorizeFeedback(questions, answers, comment, commentType);
-      
       // Transform the data to match the required API structure
       const patientData = {
         gender: gender?.toUpperCase() || 'PREFER_NOT_TO_SAY',
@@ -141,7 +137,7 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
 
       // Submit to the backend API
       try {
-        const response = await axios.post("http://192.168.100.88:8089/api/patients/submit", patientData);
+        const response = await axios.post("http://192.168.229.26:8089/api/patients/submit", patientData);
         console.log('Patient data submitted successfully:', response.data);
       } catch (apiError: any) {
         console.error('Failed to submit to backend:', apiError);
@@ -155,12 +151,10 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
         gender: gender || 'Not specified',
         departments: selectedDepartments,
         departmentPriorities: departmentPriorities,
-        questions: questions,
         answers: answers,
         commentType: commentType,
         comment: comment,
         status: 'Submitted',
-        feedbackCategory: feedbackCategory, // Add categorization data
       };
 
       const existingFeedback = await AsyncStorage.getItem('feedbackHistory');
@@ -169,7 +163,6 @@ const CommentScreen = ({ navigation, route }: CommentScreenProps) => {
       await AsyncStorage.setItem('feedbackHistory', JSON.stringify(feedbackHistory));
       
       console.log('Feedback saved locally successfully!');
-      console.log('Feedback categorization:', feedbackCategory);
       navigation.navigate('ThankYou');
     } catch (error) {
       console.error('Failed to submit feedback:', error);
@@ -363,7 +356,7 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    // justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 20,
@@ -428,9 +421,9 @@ const styles = StyleSheet.create({
     minHeight: 50,
   },
   commentTypeButtonSelected: {
-    backgroundColor: '#007BFF',
-    borderColor: '#0056B3',
-    shadowColor: '#007BFF',
+    backgroundColor: '#82D0D0',
+    borderColor: '#82D0D0',
+    shadowColor: '#82D0D0',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -472,7 +465,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   submitButton: {
-    backgroundColor: '#007BFF',
+    backgroundColor: '#82D0D0',
     paddingVertical: 16,
     paddingHorizontal: 40,
     borderRadius: 12,
@@ -543,7 +536,7 @@ const styles = StyleSheet.create({
   },
   reviewValue: {
     fontSize: 16,
-    color: '#007BFF',
+    color: '#82D0D0',
     fontWeight: '500',
     flex: 1,
     textAlign: 'right',
@@ -569,7 +562,7 @@ const styles = StyleSheet.create({
   },
   answerReviewText: {
     fontSize: 16,
-    color: '#007BFF',
+    color: '#82D0D0',
     fontWeight: '500',
   },
   commentReviewContainer: {
